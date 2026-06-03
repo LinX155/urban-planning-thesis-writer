@@ -188,22 +188,38 @@ UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPT
 
 ## 参考文件体系
 
-`references/` 目录下的这些文件各司其职：
+`references/` 按使用阶段分为两组。标记 ↑ 的文件被两个阶段共同依赖。
+
+### `/UPTW-plan` 加载
 
 | 文件 | 回答什么问题 |
 | --- | --- |
-| `skill-contract.md` | 三个显式 skill 共用的总约束、适用边界和返回风格 |
-| `corpus-findings.md` | 从真实城市规划硕士论文中观察到了什么共性 |
+| `skill-contract.md` ↑ | 三个 skill 共用的总约束、适用边界和返回风格 |
+| `state-schema.md` ↑ | 所有状态文件的字段定义 |
+| `artifact-workflow.md` ↑ | 工件设计理念和各工件的结构说明 |
 | `chapter-function-bank.md` | 每类章节（绪论/文献/方法/结果/机制/策略/结论）的功能、常见论证动作和不推荐写法 |
-| `chapter-evidence-alignment.md` | 一个判断有没有证据支撑、能不能开写 |
-| `inference-boundaries.md` | 有了证据之后，推演可以写到多强（5 级推演模式） |
-| `writing-standards.md` | 从证据到文字的最终硬约束 |
-| `reverse-outlining.md` | 写散了、写长了、前后跳了怎么修结构 |
-| `anti-template-patterns.md` | 10 种具体坏模式：空泛导语、重要性拔高、无来源权威句、抽象名词堆叠…… |
-| `red-line-review.md` | 接近定稿时只抓硬伤，不制造噪音 |
+| `chapter-evidence-alignment.md` ↑ | 有没有证据支撑、能不能开写 |
+| `inference-boundaries.md` ↑ | 有了证据之后，推演可以写到多强（5 级推演模式） |
+| `writing-standards.md` ↑ | 从证据到文字的最终硬约束 |
+| `corpus-findings.md` | 从真实城市规划硕士论文中观察到了什么共性 |
 | `harness-design.md` | 长文写作框架的设计原则来源 |
-| `artifact-workflow.md` | 工件设计理念和各工件的结构说明 |
-| `state-schema.md` | 所有状态文件的字段定义 |
+| `rubric.md` | 这个 skill 自己有没有跑偏 |
+
+### `/UPTW-write` 加载
+
+| 文件 | 回答什么问题 |
+| --- | --- |
+| `skill-contract.md` ↑ | 共享总约束与硬边界 |
+| `state-schema.md` ↑ | 状态字段定义（写前构建上下文使用） |
+| `artifact-workflow.md` ↑ | 工件工作流（构建写作上下文、启动 review cycle） |
+| `writing-standards.md` ↑ | 写作硬约束，交付前逐条校验 |
+| `inference-boundaries.md` ↑ | 推演边界，确保不越界论证 |
+| `chapter-evidence-alignment.md` ↑ | 确认证据到位才能开写 |
+| `anti-template-patterns.md` | 10 种具体 AI 腔模式：空泛导语、重要性拔高、无来源权威句、抽象名词堆叠…… |
+| `reverse-outlining.md` | 写散了、写长了、前后跳了怎么修结构 |
+| `red-line-review.md` | 接近定稿时只抓硬伤，不制造噪音 |
+| `chapter-function-bank.md` | 按需参考：当前章节的功能定位和论证动作 |
+| `rubric.md` | 自查是否跑偏 |
 
 这些文件的分工遵循一个原则：**每个文件只回答一个问题，不越界。** 比如"能不能写"由 `chapter-evidence-alignment.md` 回答，"能写到多强"由 `inference-boundaries.md` 回答，"写出来应该是什么样"由 `writing-standards.md` 回答。
 
