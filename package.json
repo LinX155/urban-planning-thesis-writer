@@ -1,0 +1,40 @@
+{
+  "name": "@linx155/urban-planning-thesis-writer",
+  "version": "0.1.0",
+  "description": "UPTW global installer and skill bundle for Codex and Claude Code",
+  "keywords": [
+    "uptw",
+    "skill",
+    "codex",
+    "claude-code",
+    "thesis",
+    "urban-planning"
+  ],
+  "homepage": "https://github.com/LinX155/urban-planning-thesis-writer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LinX155/urban-planning-thesis-writer"
+  },
+  "license": "MIT",
+  "author": "LinX155",
+  "type": "module",
+  "files": [
+    "lib",
+    "templates",
+    "references",
+    "scripts/postinstall.mjs",
+    "scripts/*.py",
+    "scripts/*.ps1",
+    "README.md"
+  ],
+  "scripts": {
+    "pack:bundle": "node ./bin/uptw.js pack",
+    "test:install:codex": "node ./bin/uptw.js install-global --tools codex --codex-home ./.tmp-codex-home",
+    "test:install:claude": "node ./bin/uptw.js install-global --tools claude --claude-home ./.tmp-claude-home",
+    "test:install:all": "node ./bin/uptw.js install-global --tools codex,claude --codex-home ./.tmp-codex-home --claude-home ./.tmp-claude-home",
+    "postinstall": "node ./scripts/postinstall.mjs"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  }
+}

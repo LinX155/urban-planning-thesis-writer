@@ -1,6 +1,6 @@
 # UPTW
 
-> 该技能不会被agent默认启用，需要时输入/UPTW可见指引
+> 该技能不会被agent默认启用，需要时显式使用 `/UPTW-init`、`/UPTW-plan`、`/UPTW-write`
 
 <p align="center">
   <strong>城市规划论文写作器</strong><br>
@@ -15,7 +15,7 @@
 
 它解决的痛点不仅是  
 <p align="center">
-```写出没有AI味并参杂着城市规划术语的一段学术表达```  </p>
+```请参考这个文件与结论帮我写一章没有AI味并使用城市规划术语的学术表达```  </p>
 更是：
 
 - 写作中证据链图表公式与论述是否一致
@@ -47,6 +47,21 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 - 实验、分析或实证处理已完成（或主体已完成）
 - 主要发现和结论已存在于用户材料中
 - 当前任务是组织成硕士论文 DOCX
+
+
+### 安装（目前仅限Windows）
+
+如果你要安装这个 skill 包，推荐直接全局安装：
+
+```powershell
+npm install -g github:LinX155/urban-planning-thesis-writer
+```
+
+以上方式要求本机已安装 Node.js。安装完成后，重启 Codex 或 Claude Code，即可使用：
+
+- `/UPTW-init`
+- `/UPTW-plan`
+- `/UPTW-write`
 
 
 ### 第一步：初始化
@@ -109,7 +124,7 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 3. 在授权范围内写作，保护用户已审阅的内容
 4. 交付前检查产出是否满足章节规格中的核心判断和推演边界
 
-写作模式会先读取 `.urban-planning-thesis-writer/state/outline.json` 和对应的 `chapters/*.json`，生成本轮的 `.urban-planning-thesis-writer/state/write-contexts/<section>.json`，再据此写作和校验。也就是说，它读的是项目里已经固化的计划工件，不是只凭聊天上下文往下写。
+写作模式会先读取 `.urban-planning-thesis-writer/state/outline.json` 和对应的 `chapters/*.json`，生成本轮的 `.urban-planning-thesis-writer/state/current_write_context.json`，再据此写作和校验。也就是说，它读的是项目里已经固化的计划工件，不是只凭聊天上下文往下写。
 
 如果写作过程中触发plan不够完备，助手会先停下来说明为什么现在不能继续写；你确认是补证据、降级判断还是调整结构，随后再回到 `/UPTW-plan` 修好之后继续 `/UPTW-write`。
 
@@ -143,21 +158,41 @@ UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPT
 ```
 .urban-planning-thesis-writer/
   state/
-    outline.json          ← 全局论证图：主问题、章节功能、依赖关系、状态
-    replan_queue.json     ← 待修复的结构性冲突（阻塞下游写作）
-    chapters/             ← v2 章节规格文件：核心判断、推演模式、证据锚点、依赖输入
-    write-contexts/       ← 每轮写作前冻结的上下文（含 `can_write` 判定）
-    review-cycles/        ← 每轮写作的请求、完成记录与计划校验
-    memory/               ← 长期偏好、章节记忆、审阅历史
-    snapshots/ diffs/ backups/ ← 快照、差异对比、备份
+    project.json          ← 论文题目、研究对象、范围、事实边界
+    outline.json          ← 全局论证图：主问题、章节功能、依赖关系
+    chapters/             ← 每章规格：核心判断、推演模式、证据锚点
+    replan_queue.json     ← 待修复的结构性冲突
+    terminology.json      ← 术语、缩写、变量命名
+    figures_formulas.json ← 图、表、公式清单
+    progress.json         ← 完成进度与阻塞状态
+    memory/
+      user_revision_preferences.json  ← 你反复验证过的写作偏好
+      section_memory.json             ← 按章节累计的确认事实
+    backups/             ← docx 原文件备份（安全第一）
 ```
+
+<small style="color: #888">以下工件由系统自动维护，正常使用无需关心：</small>
+
+<small style="color: #888">
+
+```
+      current_write_context.json  ← 最新写作上下文（覆盖式）
+      review-cycles/              ← 每轮写作的 request + completion
+        review_history.jsonl      ← 审阅事件日志（含差异摘要）
+      snapshots/                  ← docx 文本快照
+      diffs/                      ← 用户审阅前后差异
+    logs/                         ← 写入和审查日志
+```
+
+</small>
 
 ## 参考文件体系
 
-`references/` 目录下的 10 个文件各司其职：
+`references/` 目录下的这些文件各司其职：
 
 | 文件 | 回答什么问题 |
 | --- | --- |
+| `skill-contract.md` | 三个显式 skill 共用的总约束、适用边界和返回风格 |
 | `corpus-findings.md` | 从真实城市规划硕士论文中观察到了什么共性 |
 | `chapter-function-bank.md` | 每类章节（绪论/文献/方法/结果/机制/策略/结论）的功能、常见论证动作和不推荐写法 |
 | `chapter-evidence-alignment.md` | 一个判断有没有证据支撑、能不能开写 |
@@ -168,6 +203,7 @@ UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPT
 | `red-line-review.md` | 接近定稿时只抓硬伤，不制造噪音 |
 | `harness-design.md` | 长文写作框架的设计原则来源 |
 | `artifact-workflow.md` | 工件设计理念和各工件的结构说明 |
+| `rubric.md` | 这个 skill 自己有没有跑偏、有没有把边界和工件体系落实到位 |
 | `state-schema.md` | 所有状态文件的字段定义 |
 
 这些文件的分工遵循一个原则：**每个文件只回答一个问题，不越界。** 比如"能不能写"由 `chapter-evidence-alignment.md` 回答，"能写到多强"由 `inference-boundaries.md` 回答，"写出来应该是什么样"由 `writing-standards.md` 回答。

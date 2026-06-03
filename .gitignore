@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.tmp-codex-home/
+.tmp-claude-home/
+__pycache__/
+*.pyc
+PRD.md

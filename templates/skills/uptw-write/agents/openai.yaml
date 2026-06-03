@@ -1,0 +1,7 @@
+interface:
+  display_name: "UPTW Write"
+  short_description: "在冻结边界内逐节写作或修订论文正文"
+  default_prompt: "Use $uptw-write to draft or revise one approved thesis section without inventing facts or overwriting reviewed content."
+
+policy:
+  allow_implicit_invocation: false

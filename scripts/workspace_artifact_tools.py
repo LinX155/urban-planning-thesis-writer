@@ -724,7 +724,9 @@ def upsert_chapter_brief(
     return {"brief": str(saved_path), "section_id": section_id, "status": merged["status"]}
 
 
-def build_write_context(workspace: Path, section: str, output_path: Path) -> dict[str, Any]:
+def build_write_context(workspace: Path, section: str, output_path: Path | None = None) -> dict[str, Any]:
+    if output_path is None:
+        output_path = state_root(workspace) / "state" / "current_write_context.json"
     _, brief = load_brief(workspace, section)
     outline = load_outline(workspace)
     queue = load_replan_queue(workspace)
@@ -937,27 +939,23 @@ def start_review_cycle(
             "open_questions_preserved": None,
             "new_replan_item_ids": [],
         },
-    }
-    memory_decision = {
-        "stable_preferences": [],
-        "tentative_observations": [],
-        "rejected_generalizations": [],
-        "facts_confirmed": [],
-        "open_questions": [],
+        "memory_decision": {
+            "stable_preferences": [],
+            "tentative_observations": [],
+            "rejected_generalizations": [],
+            "facts_confirmed": [],
+            "open_questions": [],
+        },
     }
 
     write_json(cycle_dir / "request.json", request)
     write_json(cycle_dir / "completion.json", completion)
-    write_json(cycle_dir / "memory-decision.json", memory_decision)
-    (cycle_dir / "ai-draft.md").write_text("", encoding="utf-8")
-    (cycle_dir / "review-notes.md").write_text("", encoding="utf-8")
     if context_file is not None and context_file.exists():
         shutil.copy2(context_file, cycle_dir / "context.json")
     return {
         "cycle_dir": str(cycle_dir),
         "request": str(cycle_dir / "request.json"),
         "completion": str(cycle_dir / "completion.json"),
-        "memory_decision": str(cycle_dir / "memory-decision.json"),
     }
 
 
@@ -1194,7 +1192,7 @@ def main() -> int:
     p_context = sub.add_parser("build-write-context")
     p_context.add_argument("--workspace", required=True)
     p_context.add_argument("--section", required=True)
-    p_context.add_argument("--output", required=True)
+    p_context.add_argument("--output")
 
     p_start = sub.add_parser("start-review-cycle")
     p_start.add_argument("--workspace", required=True)
@@ -1275,7 +1273,7 @@ def main() -> int:
         payload = build_write_context(
             workspace=workspace,
             section=args.section,
-            output_path=resolve_workspace_path(workspace, args.output),
+            output_path=resolve_workspace_path(workspace, args.output) if args.output else None,
         )
     elif args.command == "start-review-cycle":
         payload = start_review_cycle(

@@ -1,0 +1,7 @@
+interface:
+  display_name: "UPTW Init"
+  short_description: "初始化论文项目的 UPTW 状态目录与依赖"
+  default_prompt: "Use $uptw-init to initialize a thesis workspace before planning or writing."
+
+policy:
+  allow_implicit_invocation: false

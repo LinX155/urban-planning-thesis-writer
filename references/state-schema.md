@@ -8,14 +8,13 @@
 - `state/outline.json`：schema v2 的全局论证图，含 `main_question`、`sections[]`、`global_open_questions`。
 - `state/replan_queue.json`：pending / resolved 的 replan item。
 - `state/chapters/*.json`：每个章节或小节的 v2 brief。
-- `state/write-contexts/`：每轮 `/write` 之前生成的 `context.json`。
+- `state/current_write_context.json`：最新一轮写作的冻结上下文（覆盖式，从信源派生）。
 - `state/terminology.json`：术语、缩写、变量命名和统一称谓。
 - `state/figures_formulas.json`：图、表、公式清单及正文引用状态。
 - `state/memory/user_revision_preferences.json`：稳定偏好、暂存观察、已拒绝泛化项，以及最近一次审阅的章节。
 - `state/memory/section_memory.json`：按章节累计的稳定偏好、暂存观察、已确认事实和待确认问题。
-- `state/memory/review_history.jsonl`：每轮审阅的事件日志，保存差异摘要路径和本轮记忆结论。
-- `state/memory/review-summaries/`：从 diff 沉淀出的摘要 JSON，供后续 write/recovery 复用。
-- `state/review-cycles/<timestamp>-<section>/`：每轮 `/write` 的工件目录，至少包含 `request.json`、`context.json`、`completion.json`、`memory-decision.json`。
+- `state/memory/review_history.jsonl`：每轮审阅的事件日志，含差异摘要和本轮记忆结论。
+- `state/review-cycles/<timestamp>-<section>/`：每轮 `/write` 的工件目录，包含 `request.json`、`completion.json`、可选的 `context.json`。
 - `state/progress.json`：已完成章节、待完成章节、blocked sections、pending replan items、最近快照、最近备份、审阅轮次和最近差异摘要。
 - `state/snapshots/`：docx 文本快照。
 - `state/diffs/`：用户审阅前后差异。
@@ -64,7 +63,7 @@
 - `status`
 - `updated_at`
 
-## `write-contexts/*.json` 最小结构
+## `current_write_context.json` 最小结构
 
 - `schema_version`
 - `section_id`

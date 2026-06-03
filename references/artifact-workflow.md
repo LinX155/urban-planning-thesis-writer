@@ -36,9 +36,9 @@ v2 brief 至少记录：
 
 ## 3. 写作上下文
 
-每次 `/UPTW-write` 在真正开始前，都应先生成 `context.json`，建议存放在 `state/write-contexts/`，随后复制进当轮 review cycle。
+每次 `/UPTW-write` 在真正开始前，都应先生成写入上下文，存放在 `state/current_write_context.json`（覆盖式，仅保留最新）。随后复制进当轮 review cycle。
 
-`context.json` 的作用不是记录所有材料，而是冻结本轮真正允许写作的 plan context。它至少要包含：
+写入上下文的作用不是记录所有材料，而是冻结本轮真正允许写作的 plan context。它至少要包含：
 
 - 当前 brief 的 `write_goal`
 - `core_judgments` 与 `reasoning_mode`
@@ -51,26 +51,26 @@ v2 brief 至少记录：
 - 当前 blocker：未解决依赖、pending replan item
 - `can_write` / `stop_reason`
 
-`/UPTW-write` 不应再靠“重新识别这一节要写什么”启动，而应依赖这个冻结上下文。
+`/UPTW-write` 不应再靠”重新识别这一节要写什么”启动，而应依赖这个冻结上下文。
+
+它是纯派生数据，始终可从 outline + chapter brief + replan_queue + memory 重新生成，因此不需要按章节归档历史版本。
 
 ## 4. Review cycle
 
 每一轮 `/UPTW-write` 都应有一个 review cycle，存放在 `state/review-cycles/<timestamp>-<section>/`。
 
-每个 cycle 至少保留：
+每个 cycle 保留：
 
-- `request.json`
-- `context.json`
-- `completion.json`
-- `memory-decision.json`
-- `ai-draft.md`
-- `review-notes.md`
+- `request.json`：本轮写作请求、计划输入、授权范围
+- `completion.json`：写作结果、plan_validation、memory_decision、快照/备份/差异路径
+- `context.json`（可选）：从 `state/current_write_context.json` 复制的冻结上下文
 
 其中：
 
 - `request.json.plan_context` 是本轮唯一有效的计划输入
 - `completion.json.plan_validation` 用来确认本轮产文是否真正满足 frozen plan
-- `memory-decision.json` 只记录哪些审阅后变更值得进入长期记忆
+- `completion.json.memory_decision` 记录审阅后值得进入长期记忆的变更（stable_preferences、tentative_observations、rejected_generalizations、facts_confirmed、open_questions）
+- 草稿内容保留在 DOCX 中，不在 cycle 目录内重复存储
 
 ## 5. Re-Plan 队列
 

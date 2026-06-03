@@ -1,4 +1,0 @@
-interface:
-  display_name: "UPTW"
-  short_description: "将既有研究成果整理为中文城市规划硕士论文 DOCX"
-  default_prompt: "Use $uptw-init to initialize the workspace, $uptw-plan to lock the evidence boundary and chapter plan, or $uptw-write to draft or revise an approved section without inventing facts."
