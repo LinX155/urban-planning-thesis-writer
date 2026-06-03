@@ -203,7 +203,6 @@ UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPT
 | `red-line-review.md` | 接近定稿时只抓硬伤，不制造噪音 |
 | `harness-design.md` | 长文写作框架的设计原则来源 |
 | `artifact-workflow.md` | 工件设计理念和各工件的结构说明 |
-| `rubric.md` | 这个 skill 自己有没有跑偏、有没有把边界和工件体系落实到位 |
 | `state-schema.md` | 所有状态文件的字段定义 |
 
 这些文件的分工遵循一个原则：**每个文件只回答一个问题，不越界。** 比如"能不能写"由 `chapter-evidence-alignment.md` 回答，"能写到多强"由 `inference-boundaries.md` 回答，"写出来应该是什么样"由 `writing-standards.md` 回答。
