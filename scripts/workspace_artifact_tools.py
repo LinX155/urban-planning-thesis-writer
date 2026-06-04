@@ -21,6 +21,8 @@ from typing import Any
 
 SCHEMA_VERSION = 2
 BLOCKED_STATUS = "blocked_replan"
+VALID_PLAN_PHASES = ("bootstrap", "inventory", "outline", "briefs")
+VALID_PHASE_STATUSES = {"pending", "in_progress", "completed", "blocked"}
 VALID_REASONING_MODES = {
     "describe",
     "compare",
@@ -111,6 +113,21 @@ def default_outline() -> dict[str, Any]:
     }
 
 
+def default_project_state() -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "thesis_title": None,
+        "research_object": None,
+        "research_scope": None,
+        "confirmed_facts_boundary": [],
+        "current_docx": None,
+        "research_questions": [],
+        "methodological_notes": [],
+        "created_at": None,
+        "updated_at": None,
+    }
+
+
 def default_brief(section_id: str) -> dict[str, Any]:
     title = section_id
     return {
@@ -151,6 +168,54 @@ def default_replan_queue() -> dict[str, Any]:
     }
 
 
+def default_terminology() -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "terms": [],
+        "abbreviations": [],
+        "variables": [],
+        "updated_at": None,
+    }
+
+
+def default_material_inventory() -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "current_docx": None,
+        "candidate_docx": [],
+        "sources": [],
+        "uncovered_questions": [],
+        "deferred_sources": [],
+        "coverage_notes": [],
+        "updated_at": None,
+    }
+
+
+def default_phase_record() -> dict[str, Any]:
+    return {
+        "status": "pending",
+        "updated_at": None,
+        "note": None,
+    }
+
+
+def default_plan_state() -> dict[str, Any]:
+    return {
+        "current_phase": None,
+        "resume_from": None,
+        "last_plan_summary": None,
+        "current_docx": None,
+        "candidate_docx": [],
+        "target_sections": [],
+        "completed_phases": [],
+        "material_inventory_path": None,
+        "outline_path": None,
+        "latest_brief_batch": [],
+        "phase_status": {phase: default_phase_record() for phase in VALID_PLAN_PHASES},
+        "updated_at": None,
+    }
+
+
 def default_progress() -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -165,11 +230,136 @@ def default_progress() -> dict[str, Any]:
         "last_write_context": None,
         "review_rounds": 0,
         "recent_diff_summaries": [],
+        "plan_state": default_plan_state(),
     }
 
 
 def merge_string_lists(existing: list[Any], new_values: list[Any]) -> list[str]:
     return unique_keep_order(list(existing) + list(new_values))
+
+
+def normalize_plan_phase(value: Any) -> str | None:
+    text = cleaned_text(value)
+    if text in VALID_PLAN_PHASES:
+        return text
+    return None
+
+
+def normalize_phase_status(value: Any) -> str | None:
+    text = cleaned_text(value)
+    if text in VALID_PHASE_STATUSES:
+        return text
+    return None
+
+
+def normalize_project_state(raw: Any) -> dict[str, Any]:
+    project = default_project_state()
+    if not isinstance(raw, dict):
+        return project
+    for key in ("thesis_title", "research_object", "research_scope", "current_docx", "created_at", "updated_at"):
+        value = raw.get(key)
+        if value is not None:
+            project[key] = value
+    project["confirmed_facts_boundary"] = unique_keep_order(raw.get("confirmed_facts_boundary", []))
+    project["research_questions"] = unique_keep_order(raw.get("research_questions", []))
+    project["methodological_notes"] = unique_keep_order(raw.get("methodological_notes", []))
+    return project
+
+
+def normalize_material_source(raw: Any, index: int | None = None) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raw = {"path": cleaned_text(raw)}
+    source_path = cleaned_text(raw.get("path") or raw.get("file") or raw.get("source_path"))
+    title = cleaned_text(raw.get("title")) or (Path(source_path).name if source_path else None)
+    identity_seed = cleaned_text(raw.get("source_id")) or source_path or title or f"source-{index or timestamp()}"
+    source_id = cleaned_text(raw.get("source_id")) or (
+        f"source-{hashlib.sha1(identity_seed.encode('utf-8')).hexdigest()[:10]}"
+    )
+    suffix = Path(source_path).suffix.lower() if source_path else None
+    return {
+        "source_id": source_id,
+        "path": source_path,
+        "title": title or source_id,
+        "file_type": cleaned_text(raw.get("file_type")) or suffix,
+        "role": cleaned_text(raw.get("role")),
+        "status": cleaned_text(raw.get("status")) or "indexed",
+        "relevance": cleaned_text(raw.get("relevance")),
+        "extracted_claims": unique_keep_order(raw.get("extracted_claims", [])),
+        "figure_ids": unique_keep_order(raw.get("figure_ids", [])),
+        "table_ids": unique_keep_order(raw.get("table_ids", [])),
+        "formula_ids": unique_keep_order(raw.get("formula_ids", [])),
+        "open_questions": unique_keep_order(raw.get("open_questions", [])),
+        "notes": unique_keep_order(raw.get("notes", [])),
+    }
+
+
+def merge_material_source(existing: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(existing)
+    for key in ("path", "title", "file_type", "role", "status", "relevance"):
+        value = patch.get(key)
+        if value is not None:
+            merged[key] = value
+    for key in ("extracted_claims", "figure_ids", "table_ids", "formula_ids", "open_questions", "notes"):
+        merged[key] = merge_string_lists(existing.get(key, []), patch.get(key, []))
+    return merged
+
+
+def normalize_material_inventory(raw: Any) -> dict[str, Any]:
+    inventory = default_material_inventory()
+    if not isinstance(raw, dict):
+        return inventory
+    for key in ("current_docx", "updated_at"):
+        value = raw.get(key)
+        if value is not None:
+            inventory[key] = value
+    inventory["candidate_docx"] = unique_keep_order(raw.get("candidate_docx", []))
+    inventory["uncovered_questions"] = unique_keep_order(raw.get("uncovered_questions", []))
+    inventory["deferred_sources"] = unique_keep_order(raw.get("deferred_sources", []))
+    inventory["coverage_notes"] = unique_keep_order(raw.get("coverage_notes", []))
+    inventory["sources"] = [
+        normalize_material_source(item, index)
+        for index, item in enumerate(ensure_list(raw.get("sources")), start=1)
+    ]
+    return inventory
+
+
+def normalize_plan_state(raw: Any) -> dict[str, Any]:
+    plan_state = default_plan_state()
+    if not isinstance(raw, dict):
+        return plan_state
+    plan_state["current_phase"] = normalize_plan_phase(raw.get("current_phase"))
+    for key in ("resume_from", "last_plan_summary", "current_docx", "material_inventory_path", "outline_path", "updated_at"):
+        value = raw.get(key)
+        if value is not None:
+            plan_state[key] = value
+    plan_state["candidate_docx"] = unique_keep_order(raw.get("candidate_docx", []))
+    plan_state["target_sections"] = unique_keep_order(raw.get("target_sections", []))
+    plan_state["latest_brief_batch"] = unique_keep_order(raw.get("latest_brief_batch", []))
+    plan_state["completed_phases"] = [
+        phase for phase in unique_keep_order(raw.get("completed_phases", [])) if phase in VALID_PLAN_PHASES
+    ]
+
+    raw_phase_status = raw.get("phase_status", {})
+    if isinstance(raw_phase_status, dict):
+        for phase in VALID_PLAN_PHASES:
+            candidate = raw_phase_status.get(phase)
+            if isinstance(candidate, dict):
+                status = normalize_phase_status(candidate.get("status"))
+                if status is not None:
+                    plan_state["phase_status"][phase]["status"] = status
+                if "note" in candidate:
+                    plan_state["phase_status"][phase]["note"] = cleaned_text(candidate.get("note"))
+                if candidate.get("updated_at") is not None:
+                    plan_state["phase_status"][phase]["updated_at"] = candidate.get("updated_at")
+
+    completed_from_status = [
+        phase for phase in VALID_PLAN_PHASES if plan_state["phase_status"][phase]["status"] == "completed"
+    ]
+    plan_state["completed_phases"] = merge_string_lists(
+        plan_state.get("completed_phases", []),
+        completed_from_status,
+    )
+    return plan_state
 
 
 def dedupe_dict_items(items: list[dict[str, Any]], identity_fn) -> list[dict[str, Any]]:
@@ -220,12 +410,13 @@ def merge_outline_section(existing: dict[str, Any], patch: dict[str, Any]) -> di
     return merged
 
 
-def load_outline(workspace: Path) -> dict[str, Any]:
-    path = state_root(workspace) / "state" / "outline.json"
-    raw = load_json(path, default_outline())
+def normalize_outline(raw: Any) -> dict[str, Any]:
     outline = default_outline()
-    outline["schema_version"] = SCHEMA_VERSION
-    outline["main_question"] = cleaned_text(raw.get("main_question"))
+    if not isinstance(raw, dict):
+        return outline
+    main_question = cleaned_text(raw.get("main_question"))
+    if main_question is not None:
+        outline["main_question"] = main_question
     outline["sections"] = []
     for section in ensure_list(raw.get("sections")):
         try:
@@ -237,6 +428,93 @@ def load_outline(workspace: Path) -> dict[str, Any]:
     )
     outline["updated_at"] = raw.get("updated_at")
     return outline
+
+
+def load_outline(workspace: Path) -> dict[str, Any]:
+    path = state_root(workspace) / "state" / "outline.json"
+    return normalize_outline(load_json(path, default_outline()))
+
+
+def write_outline(workspace: Path, outline: dict[str, Any]) -> Path:
+    normalized = normalize_outline(outline)
+    normalized["schema_version"] = SCHEMA_VERSION
+    normalized["updated_at"] = iso_now()
+    path = state_root(workspace) / "state" / "outline.json"
+    write_json(path, normalized)
+    return path
+
+
+def load_project_state(workspace: Path) -> dict[str, Any]:
+    path = state_root(workspace) / "state" / "project.json"
+    return normalize_project_state(load_json(path, default_project_state()))
+
+
+def write_project_state(workspace: Path, project: dict[str, Any]) -> Path:
+    normalized = normalize_project_state(project)
+    normalized["schema_version"] = SCHEMA_VERSION
+    if not normalized.get("created_at"):
+        normalized["created_at"] = iso_now()
+    normalized["updated_at"] = iso_now()
+    path = state_root(workspace) / "state" / "project.json"
+    write_json(path, normalized)
+    return path
+
+
+def load_material_inventory(workspace: Path) -> dict[str, Any]:
+    path = state_root(workspace) / "state" / "material_inventory.json"
+    return normalize_material_inventory(load_json(path, default_material_inventory()))
+
+
+def write_material_inventory(workspace: Path, inventory: dict[str, Any]) -> Path:
+    normalized = normalize_material_inventory(inventory)
+    normalized["schema_version"] = SCHEMA_VERSION
+    normalized["updated_at"] = iso_now()
+    path = state_root(workspace) / "state" / "material_inventory.json"
+    write_json(path, normalized)
+    return path
+
+
+def normalize_terminology(raw: Any) -> dict[str, Any]:
+    terminology = default_terminology()
+    if not isinstance(raw, dict):
+        return terminology
+    for key in ("updated_at",):
+        value = raw.get(key)
+        if value is not None:
+            terminology[key] = value
+    terminology["terms"] = unique_keep_order(raw.get("terms", []))
+    terminology["abbreviations"] = unique_keep_order(raw.get("abbreviations", []))
+    terminology["variables"] = unique_keep_order(raw.get("variables", []))
+    return terminology
+
+
+def load_terminology(workspace: Path) -> dict[str, Any]:
+    path = state_root(workspace) / "state" / "terminology.json"
+    return normalize_terminology(load_json(path, default_terminology()))
+
+
+def write_terminology(workspace: Path, terminology: dict[str, Any]) -> Path:
+    normalized = normalize_terminology(terminology)
+    normalized["schema_version"] = SCHEMA_VERSION
+    normalized["updated_at"] = iso_now()
+    path = state_root(workspace) / "state" / "terminology.json"
+    write_json(path, normalized)
+    return path
+
+
+def upsert_terminology(workspace: Path, payload_file: Path) -> dict[str, Any]:
+    payload = normalize_terminology(load_json(payload_file, {}))
+    existing = load_terminology(workspace)
+    merged = dict(existing)
+    for key in ("terms", "abbreviations", "variables"):
+        merged[key] = merge_string_lists(existing.get(key, []), payload.get(key, []))
+    saved = write_terminology(workspace, merged)
+    return {
+        "terminology": str(saved),
+        "terms_count": len(merged.get("terms", [])),
+        "abbreviations_count": len(merged.get("abbreviations", [])),
+        "variables_count": len(merged.get("variables", [])),
+    }
 
 
 def find_outline_section(outline: dict[str, Any], section_ref: str) -> tuple[int | None, dict[str, Any] | None]:
@@ -578,11 +856,13 @@ def load_progress(workspace: Path) -> dict[str, Any]:
     progress["blocked_sections"] = unique_keep_order(progress.get("blocked_sections", []))
     progress["pending_replan_items"] = unique_keep_order(progress.get("pending_replan_items", []))
     progress["recent_diff_summaries"] = unique_keep_order(progress.get("recent_diff_summaries", []))
+    progress["plan_state"] = normalize_plan_state(progress.get("plan_state"))
     return progress
 
 
 def write_progress(workspace: Path, progress: dict[str, Any]) -> Path:
     progress["schema_version"] = SCHEMA_VERSION
+    progress["plan_state"] = normalize_plan_state(progress.get("plan_state"))
     path = state_root(workspace) / "state" / "progress.json"
     write_json(path, progress)
     return path
@@ -609,7 +889,7 @@ def apply_blocked_sections(workspace: Path, queue: dict[str, Any]) -> None:
         if section["section_id"] not in blocked_sections and section.get("status") == BLOCKED_STATUS:
             section["status"] = "planned"
     outline["updated_at"] = iso_now()
-    write_json(state_root(workspace) / "state" / "outline.json", outline)
+    write_outline(workspace, outline)
 
     progress = load_progress(workspace)
     progress["blocked_sections"] = sorted(blocked_sections)
@@ -634,6 +914,186 @@ def read_latest_review_memory(workspace: Path, section_id: str) -> dict[str, Any
     return {
         "global_preferences": global_memory,
         "section_memory": section_memory.get("sections", {}).get(section_id, {}),
+    }
+
+
+def upsert_project_state(
+    workspace: Path,
+    thesis_title: str | None,
+    research_object: str | None,
+    research_scope: str | None,
+    current_docx: str | None,
+    confirmed_facts: list[str],
+    research_questions: list[str],
+    methodological_notes: list[str],
+    payload_file: Path | None,
+) -> dict[str, Any]:
+    existing = load_project_state(workspace)
+    if payload_file is not None:
+        payload = normalize_project_state(load_json(payload_file, {}))
+    else:
+        payload = normalize_project_state(
+            {
+                "thesis_title": thesis_title,
+                "research_object": research_object,
+                "research_scope": research_scope,
+                "current_docx": current_docx,
+                "confirmed_facts_boundary": confirmed_facts,
+                "research_questions": research_questions,
+                "methodological_notes": methodological_notes,
+            }
+        )
+
+    merged = dict(existing)
+    for key in ("thesis_title", "research_object", "research_scope", "current_docx"):
+        value = payload.get(key)
+        if value is not None:
+            merged[key] = value
+    merged["confirmed_facts_boundary"] = merge_string_lists(
+        existing.get("confirmed_facts_boundary", []),
+        payload.get("confirmed_facts_boundary", []),
+    )
+    merged["research_questions"] = merge_string_lists(
+        existing.get("research_questions", []),
+        payload.get("research_questions", []),
+    )
+    merged["methodological_notes"] = merge_string_lists(
+        existing.get("methodological_notes", []),
+        payload.get("methodological_notes", []),
+    )
+    saved = write_project_state(workspace, merged)
+    return {"project": str(saved), "current_docx": merged.get("current_docx")}
+
+
+def upsert_material_inventory(workspace: Path, payload_file: Path) -> dict[str, Any]:
+    payload = normalize_material_inventory(load_json(payload_file, {}))
+    existing = load_material_inventory(workspace)
+    merged = dict(existing)
+    if payload.get("current_docx") is not None:
+        merged["current_docx"] = payload["current_docx"]
+    for key in ("candidate_docx", "uncovered_questions", "deferred_sources", "coverage_notes"):
+        merged[key] = merge_string_lists(existing.get(key, []), payload.get(key, []))
+
+    sources_by_id = {item["source_id"]: item for item in existing.get("sources", [])}
+    for item in payload.get("sources", []):
+        source_id = item["source_id"]
+        if source_id in sources_by_id:
+            sources_by_id[source_id] = merge_material_source(sources_by_id[source_id], item)
+        else:
+            sources_by_id[source_id] = item
+    merged["sources"] = list(sources_by_id.values())
+
+    saved = write_material_inventory(workspace, merged)
+    return {
+        "material_inventory": str(saved),
+        "current_docx": merged.get("current_docx"),
+        "sources_upserted": [item["source_id"] for item in payload.get("sources", [])],
+    }
+
+
+def update_plan_progress(
+    workspace: Path,
+    phase: str | None,
+    status: str | None,
+    note: str | None,
+    current_docx: str | None,
+    candidate_docx: list[str],
+    target_sections: list[str],
+    resume_from: str | None,
+    material_inventory_path: str | None,
+    outline_path: str | None,
+    latest_brief_batch: list[str],
+    summary: str | None,
+    payload_file: Path | None,
+) -> dict[str, Any]:
+    progress = load_progress(workspace)
+    plan_state = normalize_plan_state(progress.get("plan_state"))
+
+    if payload_file is not None:
+        patch = load_json(payload_file, {})
+        if not isinstance(patch, dict):
+            raise SystemExit("update-plan-progress payload must be an object.")
+    else:
+        patch = {}
+
+    normalized_phase = normalize_plan_phase(phase or patch.get("current_phase") or patch.get("phase"))
+    normalized_status = normalize_phase_status(status)
+
+    if normalized_phase is not None:
+        plan_state["current_phase"] = normalized_phase
+        if normalized_status is not None:
+            plan_state["phase_status"][normalized_phase]["status"] = normalized_status
+        if note is not None:
+            plan_state["phase_status"][normalized_phase]["note"] = cleaned_text(note)
+        if normalized_status is not None or note is not None:
+            plan_state["phase_status"][normalized_phase]["updated_at"] = iso_now()
+
+    raw_phase_status = patch.get("phase_status", {})
+    if isinstance(raw_phase_status, dict):
+        for candidate_phase, candidate_payload in raw_phase_status.items():
+            phase_name = normalize_plan_phase(candidate_phase)
+            if phase_name is None or not isinstance(candidate_payload, dict):
+                continue
+            candidate_status = normalize_phase_status(candidate_payload.get("status"))
+            if candidate_status is not None:
+                plan_state["phase_status"][phase_name]["status"] = candidate_status
+            if "note" in candidate_payload:
+                plan_state["phase_status"][phase_name]["note"] = cleaned_text(candidate_payload.get("note"))
+            plan_state["phase_status"][phase_name]["updated_at"] = candidate_payload.get("updated_at") or iso_now()
+
+    if patch.get("current_phase") is not None:
+        plan_state["current_phase"] = normalize_plan_phase(patch.get("current_phase"))
+    if patch.get("resume_from") is not None:
+        plan_state["resume_from"] = patch.get("resume_from")
+    if patch.get("last_plan_summary") is not None:
+        plan_state["last_plan_summary"] = patch.get("last_plan_summary")
+    if patch.get("current_docx") is not None:
+        plan_state["current_docx"] = patch.get("current_docx")
+    if patch.get("material_inventory_path") is not None:
+        plan_state["material_inventory_path"] = patch.get("material_inventory_path")
+    if patch.get("outline_path") is not None:
+        plan_state["outline_path"] = patch.get("outline_path")
+
+    if current_docx is not None:
+        plan_state["current_docx"] = current_docx
+    if resume_from is not None:
+        plan_state["resume_from"] = resume_from
+    if material_inventory_path is not None:
+        plan_state["material_inventory_path"] = material_inventory_path
+    if outline_path is not None:
+        plan_state["outline_path"] = outline_path
+    if summary is not None:
+        plan_state["last_plan_summary"] = summary
+
+    plan_state["candidate_docx"] = merge_string_lists(
+        plan_state.get("candidate_docx", []),
+        [*ensure_list(patch.get("candidate_docx")), *candidate_docx],
+    )
+    plan_state["target_sections"] = merge_string_lists(
+        plan_state.get("target_sections", []),
+        [*ensure_list(patch.get("target_sections")), *target_sections],
+    )
+    plan_state["latest_brief_batch"] = merge_string_lists(
+        plan_state.get("latest_brief_batch", []),
+        [*ensure_list(patch.get("latest_brief_batch")), *latest_brief_batch],
+    )
+    completed = [
+        phase_name
+        for phase_name in VALID_PLAN_PHASES
+        if plan_state["phase_status"][phase_name]["status"] == "completed"
+    ]
+    plan_state["completed_phases"] = merge_string_lists(
+        ensure_list(patch.get("completed_phases")) or plan_state.get("completed_phases", []),
+        completed,
+    )
+    plan_state["updated_at"] = iso_now()
+
+    progress["plan_state"] = plan_state
+    path = write_progress(workspace, progress)
+    return {
+        "progress": str(path),
+        "current_phase": plan_state.get("current_phase"),
+        "completed_phases": plan_state.get("completed_phases", []),
     }
 
 
@@ -667,8 +1127,7 @@ def upsert_outline_section(workspace: Path, payload_file: Path) -> dict[str, Any
             outline["sections"][index] = merge_outline_section(existing, normalized)
         inserted.append(normalized["section_id"])
 
-    outline["updated_at"] = iso_now()
-    write_json(state_root(workspace) / "state" / "outline.json", outline)
+    write_outline(workspace, outline)
     return {
         "outline": str(state_root(workspace) / "state" / "outline.json"),
         "main_question": outline.get("main_question"),
@@ -797,6 +1256,7 @@ def build_write_context(workspace: Path, section: str, output_path: Path | None 
                 }
             )
 
+    terminology = load_terminology(workspace)
     blocking_replan_items = collect_replan_blockers(queue, brief["section_id"], dependency_sections)
     latest_review_memory = read_latest_review_memory(workspace, brief["section_id"])
     required_evidence = {
@@ -849,6 +1309,7 @@ def build_write_context(workspace: Path, section: str, output_path: Path | None 
         "confirmed_outputs": brief.get("confirmed_outputs", []),
         "outline_section": outline_section,
         "latest_review_memory": latest_review_memory,
+        "terminology": terminology,
         "blocking_replan_items": blocking_replan_items,
         "unresolved_dependencies": unresolved_dependencies,
         "can_write": can_write,
@@ -1078,8 +1539,7 @@ def complete_review_cycle(
             index, outline_section = find_outline_section(outline, brief["section_id"])
             if index is not None and outline_section is not None:
                 outline["sections"][index]["status"] = brief["status"]
-                outline["updated_at"] = iso_now()
-                write_json(state_root(workspace) / "state" / "outline.json", outline)
+                write_outline(workspace, outline)
 
     return {"completion": str(completion_path), "status": status}
 
@@ -1169,6 +1629,36 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
 
+    p_project = sub.add_parser("upsert-project-state")
+    p_project.add_argument("--workspace", required=True)
+    p_project.add_argument("--thesis-title")
+    p_project.add_argument("--research-object")
+    p_project.add_argument("--research-scope")
+    p_project.add_argument("--current-docx")
+    p_project.add_argument("--fact", action="append", default=[])
+    p_project.add_argument("--question", action="append", default=[])
+    p_project.add_argument("--method-note", action="append", default=[])
+    p_project.add_argument("--payload-file")
+
+    p_inventory = sub.add_parser("upsert-material-inventory")
+    p_inventory.add_argument("--workspace", required=True)
+    p_inventory.add_argument("--payload-file", required=True)
+
+    p_plan_progress = sub.add_parser("update-plan-progress")
+    p_plan_progress.add_argument("--workspace", required=True)
+    p_plan_progress.add_argument("--phase")
+    p_plan_progress.add_argument("--status")
+    p_plan_progress.add_argument("--note")
+    p_plan_progress.add_argument("--current-docx")
+    p_plan_progress.add_argument("--candidate-docx", action="append", default=[])
+    p_plan_progress.add_argument("--target-section", action="append", default=[])
+    p_plan_progress.add_argument("--resume-from")
+    p_plan_progress.add_argument("--material-inventory")
+    p_plan_progress.add_argument("--outline-path")
+    p_plan_progress.add_argument("--brief-section", action="append", default=[])
+    p_plan_progress.add_argument("--summary")
+    p_plan_progress.add_argument("--payload-file")
+
     p_outline = sub.add_parser("upsert-outline-section")
     p_outline.add_argument("--workspace", required=True)
     p_outline.add_argument("--payload-file", required=True)
@@ -1188,6 +1678,10 @@ def main() -> int:
     p_brief.add_argument("--open-question", action="append", default=[])
     p_brief.add_argument("--style-note", action="append", default=[])
     p_brief.add_argument("--payload-file")
+
+    p_terminology = sub.add_parser("upsert-terminology")
+    p_terminology.add_argument("--workspace", required=True)
+    p_terminology.add_argument("--payload-file", required=True)
 
     p_context = sub.add_parser("build-write-context")
     p_context.add_argument("--workspace", required=True)
@@ -1247,7 +1741,47 @@ def main() -> int:
 
     args = parser.parse_args()
     workspace = Path(args.workspace).resolve()
-    if args.command == "upsert-outline-section":
+    if args.command == "upsert-project-state":
+        payload = upsert_project_state(
+            workspace=workspace,
+            thesis_title=args.thesis_title,
+            research_object=args.research_object,
+            research_scope=args.research_scope,
+            current_docx=str(resolve_workspace_path(workspace, args.current_docx)) if args.current_docx else None,
+            confirmed_facts=args.fact,
+            research_questions=args.question,
+            methodological_notes=args.method_note,
+            payload_file=resolve_workspace_path(workspace, args.payload_file),
+        )
+    elif args.command == "upsert-material-inventory":
+        payload = upsert_material_inventory(
+            workspace=workspace,
+            payload_file=resolve_workspace_path(workspace, args.payload_file),
+        )
+    elif args.command == "update-plan-progress":
+        payload = update_plan_progress(
+            workspace=workspace,
+            phase=args.phase,
+            status=args.status,
+            note=args.note,
+            current_docx=str(resolve_workspace_path(workspace, args.current_docx)) if args.current_docx else None,
+            candidate_docx=[
+                str(resolve_workspace_path(workspace, item)) if resolve_workspace_path(workspace, item) is not None else item
+                for item in args.candidate_docx
+            ],
+            target_sections=args.target_section,
+            resume_from=args.resume_from,
+            material_inventory_path=(
+                str(resolve_workspace_path(workspace, args.material_inventory))
+                if args.material_inventory
+                else None
+            ),
+            outline_path=str(resolve_workspace_path(workspace, args.outline_path)) if args.outline_path else None,
+            latest_brief_batch=args.brief_section,
+            summary=args.summary,
+            payload_file=resolve_workspace_path(workspace, args.payload_file),
+        )
+    elif args.command == "upsert-outline-section":
         payload = upsert_outline_section(
             workspace=workspace,
             payload_file=resolve_workspace_path(workspace, args.payload_file),
@@ -1267,6 +1801,11 @@ def main() -> int:
             required_formulas=args.required_formula,
             open_questions=args.open_question,
             style_notes=args.style_note,
+            payload_file=resolve_workspace_path(workspace, args.payload_file),
+        )
+    elif args.command == "upsert-terminology":
+        payload = upsert_terminology(
+            workspace=workspace,
             payload_file=resolve_workspace_path(workspace, args.payload_file),
         )
     elif args.command == "build-write-context":

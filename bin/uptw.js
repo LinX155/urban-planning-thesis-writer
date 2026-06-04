@@ -58,7 +58,7 @@ function printGlobalInstallSummary(results) {
       console.log(`Codex`);
       console.log(`  Skills:   ${result.skillsRoot}`);
       console.log(`  Prompts:  ${result.commandsRoot}`);
-      console.log(`  Commands: /UPTW-init /UPTW-plan /UPTW-write`);
+      console.log(`  Commands: /UPTW-plan /UPTW-write`);
       console.log("");
       continue;
     }
@@ -66,7 +66,7 @@ function printGlobalInstallSummary(results) {
       console.log(`Claude Code`);
       console.log(`  Skills:    ${result.skillsRoot}`);
       console.log(`  Command files: ${result.commandsRoot}`);
-      console.log(`  Commands:      /UPTW-init /UPTW-plan /UPTW-write`);
+      console.log(`  Commands:      /UPTW-plan /UPTW-write`);
       console.log("");
     }
   }

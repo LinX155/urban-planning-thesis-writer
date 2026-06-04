@@ -1,6 +1,6 @@
 # UPTW
 
-> 该技能不会被agent默认启用，需要时显式使用 `/UPTW-init`、`/UPTW-plan`、`/UPTW-write`
+> 该技能不会被agent默认启用，需要时显式使用 `/UPTW-plan`、`/UPTW-write`
 
 <p align="center">
   <strong>城市规划论文写作器</strong><br>
@@ -27,15 +27,14 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 
 ---
 
-## 三个命令
+## 两个命令
 
 | 命令 | 什么时候用 |
 | --- | --- |
-| `/UPTW-init` | 第一次使用，初始化论文工程的状态与记忆目录，自动安装全部必须依赖以应对复杂docx编辑 |
-| `/UPTW-plan` | 1. 分析现有全部材料：锁定事实边界、建立论证关系、为每章定义核心判断和推演边界 2. 与你一起讨论行文框架与各章逻辑 |
+| `/UPTW-plan` | 0.首次使用时初始化论文工程的状态与记忆目录，自动安装全部必须依赖以应对复杂docx编辑 1. 分析现有全部材料：锁定事实边界、建立论证关系、推荐每章定义核心判断和推演边界 2. 与你**一起讨论**行文框架与各章逻辑 |
 | `/UPTW-write` | 1. 逐章或逐节写作；维持城乡规划中文学术写作要求，必要时阻断 2. 当你直接修改上轮docx时，会记录修改内容并严格推理泛化边界、后台形成记忆|
 
-正常顺序是 **init → plan → write → write → …**，写作阶段发现阻塞时回到计划阶段修复。
+正常顺序是 **plan（首次自动初始化） → write → write → …**，写作阶段发现阻塞时回到计划阶段修复。
 
 ---
 
@@ -57,24 +56,15 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 npm install -g github:LinX155/urban-planning-thesis-writer
 ```
 
-以上方式要求本机已安装 Node.js。安装完成后，重启 Codex 或 Claude Code，即可使用：
+以上方式要求本机已安装 Node.js 和 python 3.10+。安装完成后，重启 Codex 或 Claude Code，即可使用：
 
-- `/UPTW-init`
 - `/UPTW-plan`
 - `/UPTW-write`
 
 
-### 第一步：初始化
 
-在论文工程根目录的 Agent 会话中输入：
 
-```
-/UPTW-init 
-```
-
-助手会在用户论文项目根目录下自动创建 `.urban-planning-thesis-writer/` 目录、安装 Python 依赖以应对复杂docx的持续编辑、初始化所有状态文件。
-
-### 第二步：理解项目并建立计划
+### 第一步：理解项目并建立计划
 
 ```
 /UPTW-plan <prompt>
@@ -88,24 +78,23 @@ npm install -g github:LinX155/urban-planning-thesis-writer
 ```
 
 准备好你的 DOCX、图表、公式、实验输出和已确认结论。助手会：
-
+- **首次使用**plan会在用户论文项目根目录下自动创建 `.urban-planning-thesis-writer/` 目录、安装 Python 依赖以应对复杂docx的持续编辑、初始化所有状态文件。
 - 阅读文件夹内的所有模态的文件并理解你的研究项目，串起证据链、开题报告与中期报告，给出一份章节结构设计
 - 和你讨论每章的功能和核心判断并为每章定义推演边界（哪些判断只能描述、哪些可以谨慎解释、哪些能转译为策略）
 
-计划模式会产出是一个可执行、可校验的写作计划。
 
-人机讨论结果以文件形式固化在**你的项目文件夹**里，位置通常是：
-
+人机讨论结果以文件形式固化在**你的项目文件夹**里，可执行、可校验，位置是：
+- `.urban-planning-thesis-writer/state/project.json`：题目、研究对象、研究范围、当前 docx、事实边界。
 - `.urban-planning-thesis-writer/state/outline.json`：全局论证图、章节依赖、主问题、状态
 - `.urban-planning-thesis-writer/state/chapters/*.json`：每个章节或小节的章节规格文件
 - `.urban-planning-thesis-writer/state/replan_queue.json`：如果 plan 过程中发现需要修复的结构性冲突，会记录在这里  
-##这里的“结构冲突”指的是：它通常会在几种情况下产生：上游章节还没有产出却被下游依赖、现有证据不足以支撑原判断、用户修改推翻了既有依赖，或者某一节的实际写作目标已经明显偏离原章节规格。模型回提示你当前存在哪些冲突并讨论修复方案。
+这里的“结构冲突”指的是：它通常会在几种情况下产生：上游章节还没有产出却被下游依赖、现有证据不足以支撑原判断、用户修改推翻了既有依赖，或者某一节的实际写作目标已经明显偏离原章节规格。模型回提示你当前存在哪些冲突并讨论修复方案。
 
 也就是说，计划阶段的关键结果会落盘到项目内，供后续write模式直接使用。
 
 
 
-### 第三步：逐章写作与记忆校验
+### 第二步：逐章写作与记忆校验
 
 ```
 /UPTW-write <prompt>
@@ -143,7 +132,7 @@ npm install -g github:LinX155/urban-planning-thesis-writer
 
 ## 架构
 
-UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPTW-plan` 冻结后的章节规格；`/UPTW-write` 只能在验证通过的上下文里按规格执行。
+UPTW 的重点是拆成 `plan -> write` 两个受约束的阶段。`/UPTW-plan` 冻结后的章节规格；`/UPTW-write` 只能在验证通过的上下文里按规格执行。
 
 一旦上游结论失效、证据不足，或章节目标与原规格发生漂移，系统把问题写入 `replan_queue.json`，阻塞受影响的下游章节，再回到计划阶段统一修复。换句话说，plan管理的是整篇论文的论证秩序。
 
@@ -163,7 +152,7 @@ UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPT
     chapters/             ← 每章规格：核心判断、推演模式、证据锚点
     replan_queue.json     ← 待修复的结构性冲突
     terminology.json      ← 术语、缩写、变量命名
-    figures_formulas.json ← 图、表、公式清单
+    material_inventory.json ← 材料盘点、已深读/暂缓材料、提取出的证据线索。
     progress.json         ← 完成进度与阻塞状态
     memory/
       user_revision_preferences.json  ← 你反复验证过的写作偏好
@@ -192,7 +181,7 @@ UPTW 的重点是拆成 `init -> plan -> write` 三个受约束的阶段。`/UPT
 
 | 文件 | 应用的阶段 | 回答什么问题 |
 | --- | --- | --- |
-| `skill-contract.md` | Plan + Write | 三个 skill 共用的总约束、适用边界和返回风格 |
+| `skill-contract.md` | Plan + Write | 两个个 skill 共用的总约束、适用边界和返回风格 |
 | `state-schema.md` | Plan + Write | 所有状态文件的字段定义 |
 | `artifact-workflow.md` | Plan + Write | 工件设计理念和各工件的结构说明 |
 | `chapter-evidence-alignment.md` | Plan + Write | 有没有证据支撑、能不能开写 |

@@ -90,7 +90,10 @@ $files = @{
     research_scope = $null
     confirmed_facts_boundary = @()
     current_docx = $null
+    research_questions = @()
+    methodological_notes = @()
     created_at = (Get-Date).ToString("s")
+    updated_at = $null
   }
   "state\outline.json" = @{
     schema_version = 2
@@ -105,17 +108,21 @@ $files = @{
     resolved = @()
     updated_at = $null
   }
+  "state\material_inventory.json" = @{
+    schema_version = 2
+    current_docx = $null
+    candidate_docx = @()
+    sources = @()
+    uncovered_questions = @()
+    deferred_sources = @()
+    coverage_notes = @()
+    updated_at = $null
+  }
   "state\terminology.json" = @{
     schema_version = 2
     terms = @()
     abbreviations = @()
     variables = @()
-  }
-  "state\figures_formulas.json" = @{
-    schema_version = 2
-    figures = @()
-    tables = @()
-    formulas = @()
   }
   "state\memory\user_revision_preferences.json" = @{
     stable_preferences = @()
@@ -140,6 +147,41 @@ $files = @{
     last_write_context = $null
     review_rounds = 0
     recent_diff_summaries = @()
+    plan_state = @{
+      current_phase = $null
+      resume_from = $null
+      last_plan_summary = $null
+      current_docx = $null
+      candidate_docx = @()
+      target_sections = @()
+      completed_phases = @()
+      material_inventory_path = $null
+      outline_path = $null
+      latest_brief_batch = @()
+      phase_status = @{
+        bootstrap = @{
+          status = "pending"
+          updated_at = $null
+          note = $null
+        }
+        inventory = @{
+          status = "pending"
+          updated_at = $null
+          note = $null
+        }
+        outline = @{
+          status = "pending"
+          updated_at = $null
+          note = $null
+        }
+        briefs = @{
+          status = "pending"
+          updated_at = $null
+          note = $null
+        }
+      }
+      updated_at = $null
+    }
   }
 }
 

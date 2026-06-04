@@ -5,7 +5,7 @@ description: Use only when the user explicitly invokes /UPTW-write to draft, con
 
 # UPTW Write
 
-This is one of exactly three user-visible UPTW skills: `uptw-init`, `uptw-plan`, and `uptw-write`.
+UPTW exposes two user-visible skills: `uptw-plan` and `uptw-write`.
 
 Before writing, read:
 
@@ -39,13 +39,14 @@ If the target section or allowed scope is unclear, ask a concise question before
 ## Workflow
 
 1. Identify the exact section, target length, source materials, allowed edit range, and inline request after `/UPTW-write`.
-2. Build a write context before any drafting:
+2. Build a write context before any drafting. This injects the project terminology table (`terminology.json`) into the context so this section's writing stays consistent with established terms:
 
 ```powershell
 python .\scripts\workspace_artifact_tools.py build-write-context --workspace "<project-root>" --section "<chapter-section>"
 ```
 
 3. Inspect the generated context.
+   - Review the `terminology` field for the current term, abbreviation, and variable registry.
    - If `can_write` is `false`, stop.
    - If blockers come from missing upstream outputs, insufficient evidence, or pending replan items, send the user back to `/UPTW-plan`.
 4. Start a review cycle only after the context says the section is writable:
@@ -60,7 +61,7 @@ python .\scripts\workspace_artifact_tools.py start-review-cycle --workspace "<pr
 
 - facts are grounded in user-provided materials
 - reasoning strength does not exceed the frozen `reasoning_mode`
-- terminology matches project state
+- terminology matches the frozen context: core terms use the same names defined in the context's `terminology` field; abbreviations are expanded on first use; variable names are consistent with the registry
 - figures, tables, and formulas are introduced and interpreted properly
 - section flow moves from evidence to interpretation to conclusion
 - no generic significance padding, empty transitions, or AI-template phrasing survives
@@ -75,7 +76,12 @@ python .\scripts\state_memory_tools.py remember-review --workspace "<project-roo
 Only record stable, explainable preferences. Do not over-generalize local edits. If intent is unclear, ask the user.
 10. If structure is loose or repetitive, use reverse outlining before sentence-level polishing.
 11. For near-final checks, use the red-line review stance: report only blocking issues.
-12. When the user authorizes DOCX updates, prefer `scripts/docx_writer.py` helpers to inspect, insert, or append the prepared text block.
+12. When the user authorizes DOCX updates, use `scripts/docx_writer.py` as a set of editing primitives rather than a fixed case table.
+    - Inspect the target structure first.
+    - Choose the smallest operation that satisfies the frozen write context and authorized scope.
+    - Prefer rewriting existing prose in place when layout continuity matters.
+    - Preserve non-text anchors such as images or page-break carriers in place whenever the writing task is about surrounding prose rather than those objects themselves.
+    - Use insertion or append only when the writing task is truly additive rather than a revision of existing body text.
 13. If the DOCX is locked by the user, stop and ask them to save and close it. Retry the same file after they confirm. Do not silently redirect output elsewhere.
 14. If write-time work discovers a true replan trigger, queue it instead of improvising around it.
 15. Close the review cycle and update project state after the writing pass.

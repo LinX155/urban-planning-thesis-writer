@@ -23,7 +23,7 @@ def ensure_docx():
     try:
         import docx  # type: ignore
     except Exception as exc:  # pragma: no cover
-        raise SystemExit("Missing dependency: python-docx. Run init_thesis_workspace.ps1 first.") from exc
+        raise SystemExit("Missing dependency: python-docx. Run /UPTW-plan first to bootstrap the workspace.") from exc
     return docx
 
 

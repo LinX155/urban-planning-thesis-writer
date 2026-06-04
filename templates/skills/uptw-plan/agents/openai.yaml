@@ -1,7 +1,7 @@
 interface:
   display_name: "UPTW Plan"
   short_description: "锁定论文证据边界、章节图和写作规格"
-  default_prompt: "Use $uptw-plan to lock the thesis evidence boundary, chapter graph, and section briefs before drafting."
+  default_prompt: "Use $uptw-plan to bootstrap the workspace on first run, then execute phased material inventory, outline planning, and chapter-brief generation before drafting."
 
 policy:
   allow_implicit_invocation: false
