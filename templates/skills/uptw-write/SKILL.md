@@ -63,6 +63,10 @@ python .\scripts\workspace_artifact_tools.py start-review-cycle --workspace "<pr
 - reasoning strength does not exceed the frozen `reasoning_mode`
 - terminology matches the frozen context: core terms use the same names defined in the context's `terminology` field; abbreviations are expanded on first use; variable names are consistent with the registry
 - figures, tables, and formulas are introduced and interpreted properly
+- formulas are preceded by natural-language descriptions of the derivation logic; variable symbols are used only when necessary, with simple quantities expressed in Chinese
+- every variable in an inline formula is explained in parentheses on first appearance; display formulas are followed by a dedicated line explaining each variable
+- thresholds mentioned in the text include an explanation of their meaning and the rationale for the chosen value
+- Chinese expressions are checked for ambiguity and rewritten where multiple interpretations are possible
 - section flow moves from evidence to interpretation to conclusion
 - no generic significance padding, empty transitions, or AI-template phrasing survives
 
@@ -93,6 +97,8 @@ Only record stable, explainable preferences. Do not over-generalize local edits.
 - Preserve analytic coverage when revising. Do not make prose feel more human by deleting content.
 - Remove bad patterns specifically; do not "humanize" into chatty tone.
 - Prefer no-op or light-touch revision when the text is already strong.
+- When writing about formulas or calculations, narrate the derivation logic in natural language first; use symbols only when the expression is complex or will be referenced later. Do not introduce variable symbols for quantities that can be clearly stated in Chinese.
+- Do not deliberately complicate language for the sake of sounding academic. Clear and direct prose is preferred over convoluted phrasing.
 
 ## Guardrails
 

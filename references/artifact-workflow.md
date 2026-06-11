@@ -45,6 +45,7 @@ v2 brief 至少记录：
 - `transition_in` 与 `transition_out`
 - `replan_watchpoints`
 - 允许材料、confirmed facts、forbidden moves、required figures/tables/formulas、open questions、style notes
+- 若本节涉及公式，应登记每个公式的自然语言推导描述（即用中文叙述该公式的计算逻辑和推导步骤），确保写作时公式有对应的文字叙述
 
 它不再只是材料清单，而是局部论证规格。
 

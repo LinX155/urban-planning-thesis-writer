@@ -200,6 +200,7 @@ python .\scripts\workspace_artifact_tools.py upsert-chapter-brief --workspace "<
 - confirmed outputs
 - open questions
 - forbidden moves
+- for sections involving formulas, register a natural-language description of each formula's derivation logic and computation steps, so the write phase can produce narration that precedes and accompanies the formula rather than presenting symbols without context
 
 23. If the request scope covers the full thesis or many sections, process briefs in batches and checkpoint every batch:
 
@@ -222,6 +223,8 @@ python .\scripts\workspace_artifact_tools.py update-plan-progress --workspace "<
 - Treat material inventory as a hard prerequisite for serious planning, not a courtesy step.
 - When materials are numerous, persist partial extraction and continue in batches rather than reducing depth.
 - Treat figures, tables, and formulas as evidence objects, not decoration.
+- For every formula that will appear in the thesis, ensure the brief contains a natural-language description of the derivation logic. A section whose formulas lack such descriptions is not ready for write mode.
+- Prefer Chinese descriptions over variable symbols when the expression is simple and will not be referenced later; reserve symbols for complex or repeatedly-used quantities.
 - Extract and maintain a terminology registry: core terms, abbreviations, and variable names must be recorded in `terminology.json` so write mode can enforce consistency across chapters.
 - Keep chapter functions explicit: diagnosis, method, result, mechanism, strategy, conclusion, and so on.
 - Strategy language must still map back to diagnosis and evidence, not generic planning slogans.

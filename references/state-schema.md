@@ -107,6 +107,7 @@
 - `confirmed_facts`
 - `forbidden_moves`
 - `required_figures / required_tables / required_formulas`
+- `formula_narrations`（若本节涉及公式，登记每个公式的自然语言推导描述）
 - `open_questions`
 - `style_notes`
 - `status`

@@ -70,6 +70,7 @@
 必须完成：
 
 - 按用户请求覆盖的范围生成或修复 brief
+- 若 brief 涉及公式，须同时登记每个公式的自然语言推导描述，确保写作阶段有对应的文字叙述依据
 - 若范围很大，按批次落盘，每一批后更新 `progress.json.plan_state`
 - 任何未完成部分必须写入 `resume_from`、`target_sections` 或 blocker，不得隐性丢失
 
