@@ -4,7 +4,8 @@
 
 <p align="center">
   <strong>城市规划论文写作器</strong><br>
-  <sub>一个把已完成的城市规划研究整理为十数万字的中文硕士学位论文 DOCX 的持久技能。</sub>
+  <sub>一个把已完成的城市规划研究整理为十数万字的中文硕士学位论文 DOCX 的持久技能。</sub><br>
+  <sub>docx 不是 agent 适配的天然格式，如果你希望使用 markdown 写作以获得更稳定的效果，请见 <a href="https://github.com/LinX155/urban-planning-thesis-writer/tree/write_markdown">write_markdown 分支</a></sub>
 </p>
 
 ---
