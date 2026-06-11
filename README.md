@@ -53,7 +53,7 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 如果你要安装这个 skill 包，推荐直接全局安装：
 
 ```powershell
-npm install -g github:LinX155/urban-planning-thesis-writer
+npm install -g github:LinX155/urban-planning-thesis-writer#write_markdown
 ```
 
 以上方式要求本机已安装 Node.js 和 python 3.10+。安装完成后，重启 Codex 或 Claude Code，即可使用：
