@@ -4,7 +4,8 @@
 
 <p align="center">
   <strong>城市规划论文写作器</strong><br>
-  <sub>一个把已完成的城市规划研究整理为十数万字的中文硕士学位论文 DOCX 的持久技能。</sub>
+  <sub>一个把已完成的城市规划研究整理为十数万字的中文硕士学位论文 markdown 的持久技能。</sub><br>
+  <sub>此版本写作规范和 docx 版本完全相同，只是不依赖 docx 工具，agent 操作更稳定，最终产出格式为 markdown（图片内容以链接形式存入 markdown）。如果你想直接使用 docx 以获得无需二次整理的成品，请见 <a href="https://github.com/LinX155/urban-planning-thesis-writer/tree/write_docx">write_docx 分支</a></sub>
 </p>
 
 ---
@@ -21,7 +22,7 @@
 - 写作中证据链图表公式与论述是否一致
 - 写到第 5 章时还记不记得第 3 章做了什么判断
 - 用户改过的段落会不会被新一轮Agent写作覆盖.
-- docx中的字号、公式、表格、图片会不会漂移
+- markdown中的字号、公式、表格、图片会不会漂移
 
 UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规格文件、写作上下文、审阅用户修改并形成记忆、结构冲突队列、快照与备份。
 
@@ -31,8 +32,8 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 
 | 命令 | 什么时候用 |
 | --- | --- |
-| `/UPTW-plan` | 0.首次使用时初始化论文工程的状态与记忆目录，自动安装全部必须依赖以应对复杂docx编辑 1. 分析现有全部材料：锁定事实边界、建立论证关系、推荐每章定义核心判断和推演边界 2. 与你**一起讨论**行文框架与各章逻辑 |
-| `/UPTW-write` | 1. 逐章或逐节写作；维持城乡规划中文学术写作要求，必要时阻断 2. 当你直接修改上轮docx时，会记录修改内容并严格推理泛化边界、后台形成记忆|
+| `/UPTW-plan` | 0.首次使用时初始化论文工程的状态与记忆目录，自动安装全部必须依赖以应对复杂markdown编辑 1. 分析现有全部材料：锁定事实边界、建立论证关系、推荐每章定义核心判断和推演边界 2. 与你**一起讨论**行文框架与各章逻辑 |
+| `/UPTW-write` | 1. 逐章或逐节写作；维持城乡规划中文学术写作要求，必要时阻断 2. 当你直接修改上轮markdown时，会记录修改内容并严格推理泛化边界、后台形成记忆|
 
 正常顺序是 **plan（首次自动初始化） → write → write → …**，写作阶段发现阻塞时回到计划阶段修复。
 
@@ -45,7 +46,7 @@ UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规
 
 - 实验、分析或实证处理已完成（或主体已完成）
 - 主要发现和结论已存在于用户材料中
-- 当前任务是组织成硕士论文 DOCX
+- 当前任务是组织成硕士论文 markdown
 
 
 ### 安装（目前仅限Windows）
@@ -77,14 +78,14 @@ npm install -g github:LinX155/urban-planning-thesis-writer
 /UPTW-plan 刚才我已经写好了第三章，现在我觉得第四章到第六章要重新详细制定一下子章节，给我框架。
 ```
 
-准备好你的 DOCX、图表、公式、实验输出和已确认结论。助手会：
-- **首次使用**plan会在用户论文项目根目录下自动创建 `.urban-planning-thesis-writer/` 目录、安装 Python 依赖以应对复杂docx的持续编辑、初始化所有状态文件。
+准备好你的 markdown、图表、公式、实验输出和已确认结论。助手会：
+- **首次使用**plan会在用户论文项目根目录下自动创建 `.urban-planning-thesis-writer/` 目录、安装 Python 依赖以应对复杂markdown的持续编辑、初始化所有状态文件。
 - 阅读文件夹内的所有模态的文件并理解你的研究项目，串起证据链、开题报告与中期报告，给出一份章节结构设计
 - 和你讨论每章的功能和核心判断并为每章定义推演边界（哪些判断只能描述、哪些可以谨慎解释、哪些能转译为策略）
 
 
 人机讨论结果以文件形式固化在**你的项目文件夹**里，可执行、可校验，位置是：
-- `.urban-planning-thesis-writer/state/project.json`：题目、研究对象、研究范围、当前 docx、事实边界。
+- `.urban-planning-thesis-writer/state/project.json`：题目、研究对象、研究范围、当前 markdown、事实边界。
 - `.urban-planning-thesis-writer/state/outline.json`：全局论证图、章节依赖、主问题、状态
 - `.urban-planning-thesis-writer/state/chapters/*.json`：每个章节或小节的章节规格文件
 - `.urban-planning-thesis-writer/state/replan_queue.json`：如果 plan 过程中发现需要修复的结构性冲突，会记录在这里  
@@ -109,7 +110,7 @@ npm install -g github:LinX155/urban-planning-thesis-writer
 每次进入写作模式，只处理一个明确的章节或小节：
 
 1. 从章节规格文件构建写作上下文，检查是否可以安全开写
-2. 如果可以，快照 DOCX 并开启本轮审阅轮次
+2. 如果可以，快照 markdown 并开启本轮审阅轮次
 3. 在授权范围内写作，保护用户已审阅的内容
 4. 交付前检查产出是否满足章节规格中的核心判断和推演边界，并验证公式有无自然语言推导叙述、变量是否首次出现即解释、阈值是否附带含义、中文表达有无歧义
 
@@ -126,7 +127,7 @@ npm install -g github:LinX155/urban-planning-thesis-writer
 
 2. 如果你已经 `/UPTW-write` 了几轮，又回到 `/UPTW-plan` 调整章节结构，系统不会把前面的写作当作没发生。已写章节留下的 `confirmed_outputs`、审阅记录和结构冲突状态会继续保留。下一轮 `/UPTW-write` 会先读取更新后的计划工件，再决定是继续写、局部返工，还是先完成结构修复。
 
-3. 如果agent在写入docx时发现你因为同步开启docx而无法保存文件，不会另起一个docx，而是先要求你保存并关闭docx，然后再进行写作
+3. 如果agent在写入markdown时发现你因为同步开启markdown而无法保存文件，不会另起一个markdown，而是先要求你保存并关闭markdown，然后再进行写作
 
 ---
 
@@ -157,7 +158,7 @@ UPTW 的重点是拆成 `plan -> write` 两个受约束的阶段。`/UPTW-plan` 
     memory/
       user_revision_preferences.json  ← 你反复验证过的写作偏好
       section_memory.json             ← 按章节累计的确认事实
-    backups/             ← docx 原文件备份（安全第一）
+    backups/             ← markdown 原文件备份（安全第一）
 ```
 
 <small style="color: #888">以下工件由系统自动维护，正常使用无需关心：</small>
@@ -168,7 +169,7 @@ UPTW 的重点是拆成 `plan -> write` 两个受约束的阶段。`/UPTW-plan` 
       current_write_context.json  ← 最新写作上下文（覆盖式）
       review-cycles/              ← 每轮写作的 request + completion
         review_history.jsonl      ← 审阅事件日志（含差异摘要）
-      snapshots/                  ← docx 文本快照
+      snapshots/                  ← markdown 文本快照
       diffs/                      ← 用户审阅前后差异
     logs/                         ← 写入和审查日志
 ```
@@ -201,7 +202,7 @@ UPTW 的重点是拆成 `plan -> write` 两个受约束的阶段。`/UPTW-plan` 
 
 ## 设计原则
 
-**证据优先。** 现有 DOCX、图表、公式、数据输出和用户确认的结论，优先级永远高于对话中产生的推断。
+**证据优先。** 现有 markdown、图表、公式、数据输出和用户确认的结论，优先级永远高于对话中产生的推断。
 
 **工件优先。** 把关键决策落成磁盘上的结构化文件。这样会话中断、上下文压缩、多线并行都不会丢失论证上下文。
 
