@@ -28,7 +28,7 @@ Use this skill only when the user explicitly chooses planning or plan repair. On
 
 ## Expected Inputs
 
-- Existing thesis DOCX when available
+- Existing thesis markdown when available
 - Opening report, notes, experiment outputs, figures, tables, formulas, references, and user-confirmed conclusions
 - Any inline request text after `/UPTW-plan`
 
@@ -85,7 +85,6 @@ python .\scripts\workspace_artifact_tools.py update-plan-progress --workspace "<
 - `<project-root>\.urban-planning-thesis-writer\state\review-cycles\`
 - `<project-root>\.urban-planning-thesis-writer\state\memory\`
 - `<project-root>\.urban-planning-thesis-writer\state\snapshots\`
-- `<project-root>\.urban-planning-thesis-writer\state\diffs\`
 - `<project-root>\.urban-planning-thesis-writer\state\backups\`
 - `<project-root>\.urban-planning-thesis-writer\logs\`
 - `state/outline.json`
@@ -113,13 +112,13 @@ python .\scripts\workspace_artifact_tools.py update-plan-progress --workspace "<
 
 8. Read the user's supplied materials and the inline request after `/UPTW-plan`.
 9. Inventory the materials before attempting outline design.
-   - Identify candidate thesis DOCX files, opening report, notes, experiment outputs, figures, tables, formulas, references, and any user-confirmed conclusions.
+   - Identify candidate thesis markdown files, opening report, notes, experiment outputs, figures, tables, formulas, references, and any user-confirmed conclusions.
    - Do not treat file listing as sufficient. For each core material, extract at least one reusable result: a fact boundary, methodological note, key finding, figure/table/formula clue, or unresolved question.
-   - If there are multiple plausible main DOCX files, stop and ask one short question instead of guessing.
-10. If an existing DOCX will be inspected or may later be edited, snapshot it first:
+   - If there are multiple plausible main markdown files, stop and ask one short question instead of guessing.
+10. If an existing markdown will be inspected or may later be edited, snapshot it first:
 
 ```powershell
-python .\scripts\docx_state_tools.py snapshot --workspace "<project-root>" --docx "<thesis.docx>" --label "plan"
+Copy-Item "<project-root>\thesis.md" "<project-root>\.urban-planning-thesis-writer\state\snapshots\plan-snapshot.md"
 ```
 
 11. Persist project-level facts as soon as they are clear:
@@ -140,13 +139,13 @@ python .\scripts\workspace_artifact_tools.py upsert-material-inventory --workspa
 python .\scripts\workspace_artifact_tools.py upsert-terminology --workspace "<project-root>" --payload-file "<terminology-payload.json>"
 ```
 
-14. Record candidate docx files, the current docx, and resume notes:
+14. Record candidate markdown files, the current markdown, and resume notes:
 
 ```powershell
-python .\scripts\workspace_artifact_tools.py update-plan-progress --workspace "<project-root>" --phase inventory --status completed --current-docx "<thesis.docx>" --material-inventory ".\.urban-planning-thesis-writer\state\material_inventory.json" --summary "Material inventory completed"
+python .\scripts\workspace_artifact_tools.py update-plan-progress --workspace "<project-root>" --phase inventory --status completed --current-markdown "<thesis.md>" --material-inventory ".\.urban-planning-thesis-writer\state\material_inventory.json" --summary "Material inventory completed"
 ```
 
-Do not advance to `outline` if core materials have only been skimmed or if the main DOCX remains ambiguous.
+Do not advance to `outline` if core materials have only been skimmed or if the main markdown remains ambiguous.
 
 ### Phase 3: Outline
 

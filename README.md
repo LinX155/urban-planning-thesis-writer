@@ -22,7 +22,6 @@
 - 写作中证据链图表公式与论述是否一致
 - 写到第 5 章时还记不记得第 3 章做了什么判断
 - 用户改过的段落会不会被新一轮Agent写作覆盖.
-- markdown中的字号、公式、表格、图片会不会漂移
 
 UPTW 用一套持久化工件来解决这些问题：全局论证链、章节规格文件、写作上下文、审阅用户修改并形成记忆、结构冲突队列、快照与备份。
 
@@ -127,8 +126,6 @@ npm install -g github:LinX155/urban-planning-thesis-writer
 
 2. 如果你已经 `/UPTW-write` 了几轮，又回到 `/UPTW-plan` 调整章节结构，系统不会把前面的写作当作没发生。已写章节留下的 `confirmed_outputs`、审阅记录和结构冲突状态会继续保留。下一轮 `/UPTW-write` 会先读取更新后的计划工件，再决定是继续写、局部返工，还是先完成结构修复。
 
-3. 如果agent在写入markdown时发现你因为同步开启markdown而无法保存文件，不会另起一个markdown，而是先要求你保存并关闭markdown，然后再进行写作
-
 ---
 
 ## 架构
@@ -170,7 +167,6 @@ UPTW 的重点是拆成 `plan -> write` 两个受约束的阶段。`/UPTW-plan` 
       review-cycles/              ← 每轮写作的 request + completion
         review_history.jsonl      ← 审阅事件日志（含差异摘要）
       snapshots/                  ← markdown 文本快照
-      diffs/                      ← 用户审阅前后差异
     logs/                         ← 写入和审查日志
 ```
 

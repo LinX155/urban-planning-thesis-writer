@@ -52,12 +52,12 @@ python .\scripts\workspace_artifact_tools.py build-write-context --workspace "<p
 4. Start a review cycle only after the context says the section is writable:
 
 ```powershell
-python .\scripts\workspace_artifact_tools.py start-review-cycle --workspace "<project-root>" --docx "<thesis.docx>" --allowed-scope "<authorized edit range>" --context-file "<project-root>\.urban-planning-thesis-writer\state\current_write_context.json"
+python .\scripts\workspace_artifact_tools.py start-review-cycle --workspace "<project-root>" --markdown "<thesis.md>" --allowed-scope "<authorized edit range>" --context-file "<project-root>\.urban-planning-thesis-writer\state\current_write_context.json"
 ```
 
-5. Snapshot the current DOCX before editing. If there is a previous snapshot, diff it so user changes can be detected and summarized.
+5. Snapshot the current markdown before editing. If there is a previous snapshot, compare it with the current file to detect user changes.
 6. Draft or revise only inside the authorized scope.
-7. Before delivery or DOCX editing, verify:
+7. Before delivery or markdown editing, verify:
 
 - facts are grounded in user-provided materials
 - reasoning strength does not exceed the frozen `reasoning_mode`
@@ -80,15 +80,9 @@ python .\scripts\state_memory_tools.py remember-review --workspace "<project-roo
 Only record stable, explainable preferences. Do not over-generalize local edits. If intent is unclear, ask the user.
 10. If structure is loose or repetitive, use reverse outlining before sentence-level polishing.
 11. For near-final checks, use the red-line review stance: report only blocking issues.
-12. When the user authorizes DOCX updates, use `scripts/docx_writer.py` as a set of editing primitives rather than a fixed case table.
-    - Inspect the target structure first.
-    - Choose the smallest operation that satisfies the frozen write context and authorized scope.
-    - Prefer rewriting existing prose in place when layout continuity matters.
-    - Preserve non-text anchors such as images or page-break carriers in place whenever the writing task is about surrounding prose rather than those objects themselves.
-    - Use insertion or append only when the writing task is truly additive rather than a revision of existing body text.
-13. If the DOCX is locked by the user, stop and ask them to save and close it. Retry the same file after they confirm. Do not silently redirect output elsewhere.
-14. If write-time work discovers a true replan trigger, queue it instead of improvising around it.
-15. Close the review cycle and update project state after the writing pass.
+12. When writing to markdown, directly edit the markdown file within the authorized scope. Choose the smallest edit that satisfies the frozen write context. Use insertion or append only when the writing task is truly additive rather than a revision of existing body text.
+13. If write-time work discovers a true replan trigger, queue it instead of improvising around it.
+14. Close the review cycle and update project state after the writing pass.
 
 ## Writing Standards
 
@@ -115,4 +109,4 @@ Return only:
 - whether the context allowed writing
 - what was drafted or revised
 - what remains blocked
-- whether the DOCX was updated
+- whether the markdown was updated

@@ -21,7 +21,7 @@
 
 它至少要记录：
 
-- 候选 thesis docx 与最终选中的当前 docx
+- 候选 thesis markdown 与最终选中的当前 markdown
 - 每份核心材料的 `role`、`status`、`relevance`
 - 从材料中明确提取出的 `extracted_claims`
 - 图、表、公式编号线索
@@ -85,7 +85,7 @@ v2 brief 至少记录：
 - `request.json.plan_context` 是本轮唯一有效的计划输入
 - `completion.json.plan_validation` 用来确认本轮产文是否真正满足 frozen plan
 - `completion.json.memory_decision` 记录审阅后值得进入长期记忆的变更（stable_preferences、tentative_observations、rejected_generalizations、facts_confirmed、open_questions）
-- 草稿内容保留在 DOCX 中，不在 cycle 目录内重复存储
+- 草稿内容保留在 markdown 中，不在 cycle 目录内重复存储
 
 ## 6. Re-Plan 队列
 
@@ -119,6 +119,6 @@ v2 brief 至少记录：
 - `outline`：冻结主问题、章节功能、依赖关系、全局 blocker 和开放问题
 - `briefs`：为本轮请求涉及的章节持续批量生成或修复 brief，并在每一批后落盘
 
-每个 phase 结束后都应更新 `progress.json.plan_state`。如果材料过多、存在多个候选 docx、或用户请求覆盖整篇论文，模型也不能因为上下文疲劳而缩水；它应在 phase 之间持续落盘、恢复、继续，而不是草率收束。
+每个 phase 结束后都应更新 `progress.json.plan_state`。如果材料过多、存在多个候选 markdown、或用户请求覆盖整篇论文，模型也不能因为上下文疲劳而缩水；它应在 phase 之间持续落盘、恢复、继续，而不是草率收束。
 
 

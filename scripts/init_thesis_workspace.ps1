@@ -52,7 +52,6 @@ $StateDirs = @(
   "state\memory",
   "state\review-cycles",
   "state\snapshots",
-  "state\diffs",
   "state\backups",
   "logs"
 )
@@ -65,7 +64,7 @@ try {
   throw "Python was not found. Install Python 3.10+ or pass -Python with an absolute python.exe path."
 }
 
-$required = @("docx", "lxml", "pypdf")
+$required = @("pypdf")
 $missing = @()
 foreach ($pkg in $required) {
   if (-not (Test-PythonPackage $pkg)) {
@@ -75,7 +74,7 @@ foreach ($pkg in $required) {
 
 if ($missing.Count -gt 0) {
   Write-Step "Installing missing Python packages: $($missing -join ', ')"
-  & $Python -m pip install python-docx lxml pypdf | Out-Host
+  & $Python -m pip install pypdf | Out-Host
 }
 
 foreach ($dir in $StateDirs) {
@@ -89,7 +88,7 @@ $files = @{
     research_object = $null
     research_scope = $null
     confirmed_facts_boundary = @()
-    current_docx = $null
+    current_markdown = $null
     research_questions = @()
     methodological_notes = @()
     created_at = (Get-Date).ToString("s")
@@ -110,8 +109,8 @@ $files = @{
   }
   "state\material_inventory.json" = @{
     schema_version = 2
-    current_docx = $null
-    candidate_docx = @()
+    current_markdown = $null
+    candidate_markdown = @()
     sources = @()
     uncovered_questions = @()
     deferred_sources = @()
@@ -146,13 +145,12 @@ $files = @{
     last_review_summary = $null
     last_write_context = $null
     review_rounds = 0
-    recent_diff_summaries = @()
     plan_state = @{
       current_phase = $null
       resume_from = $null
       last_plan_summary = $null
-      current_docx = $null
-      candidate_docx = @()
+      current_markdown = $null
+      candidate_markdown = @()
       target_sections = @()
       completed_phases = @()
       material_inventory_path = $null
@@ -198,4 +196,4 @@ if (-not (Test-Path -LiteralPath $reviewHistory)) {
 }
 
 Write-Step "Initialized state directory: $StateRoot"
-Write-Step "Next: run /UPTW-plan with the user's existing materials and docx paths."
+Write-Step "Next: run /UPTW-plan with the user's existing materials and markdown paths."

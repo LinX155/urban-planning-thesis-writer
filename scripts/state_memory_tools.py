@@ -123,7 +123,6 @@ def remember_review(
             "last_review_section": None,
             "last_review_summary": None,
             "review_rounds": 0,
-            "recent_diff_summaries": [],
         },
     )
     section_memory = load_json(section_path, {"sections": {}})
@@ -161,10 +160,6 @@ def remember_review(
     progress["last_review_section"] = section
     progress["last_review_summary"] = evidence
     progress["review_rounds"] = int(progress.get("review_rounds", 0)) + 1
-    recent = list(progress.get("recent_diff_summaries", []))
-    if evidence:
-        recent.append(evidence)
-    progress["recent_diff_summaries"] = recent[-10:]
 
     event = {
         "recorded_at": timestamp(),

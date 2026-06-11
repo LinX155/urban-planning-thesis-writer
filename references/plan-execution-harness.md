@@ -41,15 +41,15 @@
 
 必须完成：
 
-- 识别候选 thesis docx
+- 识别候选 thesis markdown
 - 识别核心材料家族：现有论文正文、开题/中期、图表表格、实验输出、用户确认结论
 - 将核心材料写入 `material_inventory.json`
-- 将 thesis 题目、研究对象、研究范围、当前 docx 等写入 `project.json`
+- 将 thesis 题目、研究对象、研究范围、当前 markdown 等写入 `project.json`
 - 从材料中提取核心术语、缩写、变量命名，写入 `terminology.json`
 
 不得在以下情况直接推进到 `outline`：
 
-- 有多个候选主 docx 但未确认当前使用哪一个
+- 有多个候选主 markdown 但未确认当前使用哪一个
 - 只有“目录浏览”而没有材料级 evidence extraction
 - 核心材料家族缺失且未明确记录为 blocker 或 deferred
 

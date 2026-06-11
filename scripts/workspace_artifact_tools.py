@@ -120,7 +120,7 @@ def default_project_state() -> dict[str, Any]:
         "research_object": None,
         "research_scope": None,
         "confirmed_facts_boundary": [],
-        "current_docx": None,
+        "current_markdown": None,
         "research_questions": [],
         "methodological_notes": [],
         "created_at": None,
@@ -181,8 +181,8 @@ def default_terminology() -> dict[str, Any]:
 def default_material_inventory() -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
-        "current_docx": None,
-        "candidate_docx": [],
+        "current_markdown": None,
+        "candidate_markdown": [],
         "sources": [],
         "uncovered_questions": [],
         "deferred_sources": [],
@@ -204,8 +204,8 @@ def default_plan_state() -> dict[str, Any]:
         "current_phase": None,
         "resume_from": None,
         "last_plan_summary": None,
-        "current_docx": None,
-        "candidate_docx": [],
+        "current_markdown": None,
+        "candidate_markdown": [],
         "target_sections": [],
         "completed_phases": [],
         "material_inventory_path": None,
@@ -229,7 +229,6 @@ def default_progress() -> dict[str, Any]:
         "last_review_summary": None,
         "last_write_context": None,
         "review_rounds": 0,
-        "recent_diff_summaries": [],
         "plan_state": default_plan_state(),
     }
 
@@ -256,7 +255,7 @@ def normalize_project_state(raw: Any) -> dict[str, Any]:
     project = default_project_state()
     if not isinstance(raw, dict):
         return project
-    for key in ("thesis_title", "research_object", "research_scope", "current_docx", "created_at", "updated_at"):
+    for key in ("thesis_title", "research_object", "research_scope", "current_markdown", "created_at", "updated_at"):
         value = raw.get(key)
         if value is not None:
             project[key] = value
@@ -308,11 +307,11 @@ def normalize_material_inventory(raw: Any) -> dict[str, Any]:
     inventory = default_material_inventory()
     if not isinstance(raw, dict):
         return inventory
-    for key in ("current_docx", "updated_at"):
+    for key in ("current_markdown", "updated_at"):
         value = raw.get(key)
         if value is not None:
             inventory[key] = value
-    inventory["candidate_docx"] = unique_keep_order(raw.get("candidate_docx", []))
+    inventory["candidate_markdown"] = unique_keep_order(raw.get("candidate_markdown", []))
     inventory["uncovered_questions"] = unique_keep_order(raw.get("uncovered_questions", []))
     inventory["deferred_sources"] = unique_keep_order(raw.get("deferred_sources", []))
     inventory["coverage_notes"] = unique_keep_order(raw.get("coverage_notes", []))
@@ -328,11 +327,11 @@ def normalize_plan_state(raw: Any) -> dict[str, Any]:
     if not isinstance(raw, dict):
         return plan_state
     plan_state["current_phase"] = normalize_plan_phase(raw.get("current_phase"))
-    for key in ("resume_from", "last_plan_summary", "current_docx", "material_inventory_path", "outline_path", "updated_at"):
+    for key in ("resume_from", "last_plan_summary", "current_markdown", "material_inventory_path", "outline_path", "updated_at"):
         value = raw.get(key)
         if value is not None:
             plan_state[key] = value
-    plan_state["candidate_docx"] = unique_keep_order(raw.get("candidate_docx", []))
+    plan_state["candidate_markdown"] = unique_keep_order(raw.get("candidate_markdown", []))
     plan_state["target_sections"] = unique_keep_order(raw.get("target_sections", []))
     plan_state["latest_brief_batch"] = unique_keep_order(raw.get("latest_brief_batch", []))
     plan_state["completed_phases"] = [
@@ -855,7 +854,6 @@ def load_progress(workspace: Path) -> dict[str, Any]:
     progress["pending_sections"] = unique_keep_order(progress.get("pending_sections", []))
     progress["blocked_sections"] = unique_keep_order(progress.get("blocked_sections", []))
     progress["pending_replan_items"] = unique_keep_order(progress.get("pending_replan_items", []))
-    progress["recent_diff_summaries"] = unique_keep_order(progress.get("recent_diff_summaries", []))
     progress["plan_state"] = normalize_plan_state(progress.get("plan_state"))
     return progress
 
@@ -922,7 +920,7 @@ def upsert_project_state(
     thesis_title: str | None,
     research_object: str | None,
     research_scope: str | None,
-    current_docx: str | None,
+    current_markdown: str | None,
     confirmed_facts: list[str],
     research_questions: list[str],
     methodological_notes: list[str],
@@ -937,7 +935,7 @@ def upsert_project_state(
                 "thesis_title": thesis_title,
                 "research_object": research_object,
                 "research_scope": research_scope,
-                "current_docx": current_docx,
+                "current_markdown": current_markdown,
                 "confirmed_facts_boundary": confirmed_facts,
                 "research_questions": research_questions,
                 "methodological_notes": methodological_notes,
@@ -945,7 +943,7 @@ def upsert_project_state(
         )
 
     merged = dict(existing)
-    for key in ("thesis_title", "research_object", "research_scope", "current_docx"):
+    for key in ("thesis_title", "research_object", "research_scope", "current_markdown"):
         value = payload.get(key)
         if value is not None:
             merged[key] = value
@@ -962,16 +960,16 @@ def upsert_project_state(
         payload.get("methodological_notes", []),
     )
     saved = write_project_state(workspace, merged)
-    return {"project": str(saved), "current_docx": merged.get("current_docx")}
+    return {"project": str(saved), "current_markdown": merged.get("current_markdown")}
 
 
 def upsert_material_inventory(workspace: Path, payload_file: Path) -> dict[str, Any]:
     payload = normalize_material_inventory(load_json(payload_file, {}))
     existing = load_material_inventory(workspace)
     merged = dict(existing)
-    if payload.get("current_docx") is not None:
-        merged["current_docx"] = payload["current_docx"]
-    for key in ("candidate_docx", "uncovered_questions", "deferred_sources", "coverage_notes"):
+    if payload.get("current_markdown") is not None:
+        merged["current_markdown"] = payload["current_markdown"]
+    for key in ("candidate_markdown", "uncovered_questions", "deferred_sources", "coverage_notes"):
         merged[key] = merge_string_lists(existing.get(key, []), payload.get(key, []))
 
     sources_by_id = {item["source_id"]: item for item in existing.get("sources", [])}
@@ -986,7 +984,7 @@ def upsert_material_inventory(workspace: Path, payload_file: Path) -> dict[str, 
     saved = write_material_inventory(workspace, merged)
     return {
         "material_inventory": str(saved),
-        "current_docx": merged.get("current_docx"),
+        "current_markdown": merged.get("current_markdown"),
         "sources_upserted": [item["source_id"] for item in payload.get("sources", [])],
     }
 
@@ -996,8 +994,8 @@ def update_plan_progress(
     phase: str | None,
     status: str | None,
     note: str | None,
-    current_docx: str | None,
-    candidate_docx: list[str],
+    current_markdown: str | None,
+    candidate_markdown: list[str],
     target_sections: list[str],
     resume_from: str | None,
     material_inventory_path: str | None,
@@ -1047,15 +1045,15 @@ def update_plan_progress(
         plan_state["resume_from"] = patch.get("resume_from")
     if patch.get("last_plan_summary") is not None:
         plan_state["last_plan_summary"] = patch.get("last_plan_summary")
-    if patch.get("current_docx") is not None:
-        plan_state["current_docx"] = patch.get("current_docx")
+    if patch.get("current_markdown") is not None:
+        plan_state["current_markdown"] = patch.get("current_markdown")
     if patch.get("material_inventory_path") is not None:
         plan_state["material_inventory_path"] = patch.get("material_inventory_path")
     if patch.get("outline_path") is not None:
         plan_state["outline_path"] = patch.get("outline_path")
 
-    if current_docx is not None:
-        plan_state["current_docx"] = current_docx
+    if current_markdown is not None:
+        plan_state["current_markdown"] = current_markdown
     if resume_from is not None:
         plan_state["resume_from"] = resume_from
     if material_inventory_path is not None:
@@ -1065,9 +1063,9 @@ def update_plan_progress(
     if summary is not None:
         plan_state["last_plan_summary"] = summary
 
-    plan_state["candidate_docx"] = merge_string_lists(
-        plan_state.get("candidate_docx", []),
-        [*ensure_list(patch.get("candidate_docx")), *candidate_docx],
+    plan_state["candidate_markdown"] = merge_string_lists(
+        plan_state.get("candidate_markdown", []),
+        [*ensure_list(patch.get("candidate_markdown")), *candidate_markdown],
     )
     plan_state["target_sections"] = merge_string_lists(
         plan_state.get("target_sections", []),
@@ -1349,7 +1347,7 @@ def start_review_cycle(
     workspace: Path,
     section: str | None,
     goal: str | None,
-    docx_path: str | None,
+    markdown_path: str | None,
     allowed_scope: str | None,
     target_length: str | None,
     sources: list[str],
@@ -1374,7 +1372,7 @@ def start_review_cycle(
     request = {
         "section": section_name,
         "goal": cleaned_text(goal) or plan_context.get("write_goal"),
-        "docx": docx_path,
+        "markdown": markdown_path,
         "allowed_scope": cleaned_text(allowed_scope) or cleaned_text(context.get("title")),
         "target_length": cleaned_text(target_length) or plan_context.get("target_length"),
         "sources": merge_string_lists(sources, context.get("sources", [])),
@@ -1388,9 +1386,8 @@ def start_review_cycle(
         "status": "open",
         "snapshot": None,
         "backup": None,
-        "diff_summary": None,
         "memory_summary": None,
-        "output_docx": None,
+        "output_markdown": None,
         "closed_at": None,
         "notes": [],
         "plan_validation": {
@@ -1460,9 +1457,8 @@ def complete_review_cycle(
     status: str,
     snapshot: str | None,
     backup: str | None,
-    diff_summary: str | None,
     memory_summary: str | None,
-    output_docx: str | None,
+    output_markdown: str | None,
     notes: list[str],
     plan_validation_file: Path | None,
     judgments_covered: list[str],
@@ -1481,9 +1477,8 @@ def complete_review_cycle(
             "status": "open",
             "snapshot": None,
             "backup": None,
-            "diff_summary": None,
             "memory_summary": None,
-            "output_docx": None,
+            "output_markdown": None,
             "closed_at": None,
             "notes": [],
             "plan_validation": {},
@@ -1494,12 +1489,10 @@ def complete_review_cycle(
         completion["snapshot"] = snapshot
     if backup:
         completion["backup"] = backup
-    if diff_summary:
-        completion["diff_summary"] = diff_summary
     if memory_summary:
         completion["memory_summary"] = memory_summary
-    if output_docx:
-        completion["output_docx"] = output_docx
+    if output_markdown:
+        completion["output_markdown"] = output_markdown
     completion["notes"] = unique_keep_order(list(completion.get("notes", [])) + notes)
     completion["plan_validation"] = load_plan_validation(
         plan_validation_file,
@@ -1634,7 +1627,7 @@ def main() -> int:
     p_project.add_argument("--thesis-title")
     p_project.add_argument("--research-object")
     p_project.add_argument("--research-scope")
-    p_project.add_argument("--current-docx")
+    p_project.add_argument("--current-markdown")
     p_project.add_argument("--fact", action="append", default=[])
     p_project.add_argument("--question", action="append", default=[])
     p_project.add_argument("--method-note", action="append", default=[])
@@ -1649,8 +1642,8 @@ def main() -> int:
     p_plan_progress.add_argument("--phase")
     p_plan_progress.add_argument("--status")
     p_plan_progress.add_argument("--note")
-    p_plan_progress.add_argument("--current-docx")
-    p_plan_progress.add_argument("--candidate-docx", action="append", default=[])
+    p_plan_progress.add_argument("--current-markdown")
+    p_plan_progress.add_argument("--candidate-markdown", action="append", default=[])
     p_plan_progress.add_argument("--target-section", action="append", default=[])
     p_plan_progress.add_argument("--resume-from")
     p_plan_progress.add_argument("--material-inventory")
@@ -1692,7 +1685,7 @@ def main() -> int:
     p_start.add_argument("--workspace", required=True)
     p_start.add_argument("--section")
     p_start.add_argument("--goal")
-    p_start.add_argument("--docx")
+    p_start.add_argument("--markdown")
     p_start.add_argument("--allowed-scope")
     p_start.add_argument("--target-length")
     p_start.add_argument("--source", action="append", default=[])
@@ -1706,9 +1699,8 @@ def main() -> int:
     p_complete.add_argument("--status", default="reviewed")
     p_complete.add_argument("--snapshot")
     p_complete.add_argument("--backup")
-    p_complete.add_argument("--diff-summary")
     p_complete.add_argument("--memory-summary")
-    p_complete.add_argument("--output-docx")
+    p_complete.add_argument("--output-markdown")
     p_complete.add_argument("--note", action="append", default=[])
     p_complete.add_argument("--plan-validation-file")
     p_complete.add_argument("--covered-judgment", action="append", default=[])
@@ -1747,7 +1739,7 @@ def main() -> int:
             thesis_title=args.thesis_title,
             research_object=args.research_object,
             research_scope=args.research_scope,
-            current_docx=str(resolve_workspace_path(workspace, args.current_docx)) if args.current_docx else None,
+            current_markdown=str(resolve_workspace_path(workspace, args.current_markdown)) if args.current_markdown else None,
             confirmed_facts=args.fact,
             research_questions=args.question,
             methodological_notes=args.method_note,
@@ -1764,10 +1756,10 @@ def main() -> int:
             phase=args.phase,
             status=args.status,
             note=args.note,
-            current_docx=str(resolve_workspace_path(workspace, args.current_docx)) if args.current_docx else None,
-            candidate_docx=[
+            current_markdown=str(resolve_workspace_path(workspace, args.current_markdown)) if args.current_markdown else None,
+            candidate_markdown=[
                 str(resolve_workspace_path(workspace, item)) if resolve_workspace_path(workspace, item) is not None else item
-                for item in args.candidate_docx
+                for item in args.candidate_markdown
             ],
             target_sections=args.target_section,
             resume_from=args.resume_from,
@@ -1819,7 +1811,7 @@ def main() -> int:
             workspace=workspace,
             section=args.section,
             goal=args.goal,
-            docx_path=args.docx,
+            markdown_path=args.markdown,
             allowed_scope=args.allowed_scope,
             target_length=args.target_length,
             sources=args.source,
@@ -1834,9 +1826,8 @@ def main() -> int:
             status=args.status,
             snapshot=str(resolve_workspace_path(workspace, args.snapshot)) if args.snapshot else None,
             backup=str(resolve_workspace_path(workspace, args.backup)) if args.backup else None,
-            diff_summary=str(resolve_workspace_path(workspace, args.diff_summary)) if args.diff_summary else None,
             memory_summary=str(resolve_workspace_path(workspace, args.memory_summary)) if args.memory_summary else None,
-            output_docx=str(resolve_workspace_path(workspace, args.output_docx)) if args.output_docx else None,
+            output_markdown=str(resolve_workspace_path(workspace, args.output_markdown)) if args.output_markdown else None,
             notes=args.note,
             plan_validation_file=resolve_workspace_path(workspace, args.plan_validation_file),
             judgments_covered=args.covered_judgment,
